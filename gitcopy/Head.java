@@ -1,5 +1,5 @@
 package gitcopy;
 
-public class Blob {
+public class Head {
 
 }
