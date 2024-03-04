@@ -1,5 +1,7 @@
 package gitcopy;
 
-public class Commit {
+import java.io.Serializable;
+
+public class Commit implements Serializable {
 
 }

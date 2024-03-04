@@ -1,6 +1,8 @@
-package gitcopy.state_machine.states;
+package gitcopy;
 
-public class UninitializedState extends GitCopyState {
+import java.io.Serializable;
+
+public class UninitializedState extends GitCopyState implements Serializable {
 
   @Override
   public void processCommand() {

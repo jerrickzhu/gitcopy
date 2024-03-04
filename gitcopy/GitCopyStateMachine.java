@@ -1,12 +1,8 @@
-package gitcopy.state_machine;
+package gitcopy;
 
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-
-import gitcopy.state_machine.states.GitCopyState;
-import gitcopy.state_machine.states.InitializedState;
-import gitcopy.state_machine.states.UninitializedState;
 
 public class GitCopyStateMachine implements Serializable {
   private Map<String, GitCopyState> currentStates;
@@ -20,6 +16,7 @@ public class GitCopyStateMachine implements Serializable {
   public GitCopyStateMachine() {
     this.currentStates = new HashMap<>();
     this.currentStates.put("REPO", new UninitializedState());
+
   }
 
   public GitCopyState getCurrentStateOfFile(String filename) {
@@ -32,6 +29,7 @@ public class GitCopyStateMachine implements Serializable {
 
   public void transitionState(String input, String filename) {
     GitCopyState currState = getCurrentStateOfFile(filename);
+
     if (input == "init") {
       if (currState instanceof UninitializedState) {
         addFileAndStateToMachine("REPO", new InitializedState());
@@ -52,4 +50,5 @@ public class GitCopyStateMachine implements Serializable {
     GitCopyState currFileState = getCurrentStateOfFile(filename);
     currFileState.processCommand();
   }
+
 }

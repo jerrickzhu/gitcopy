@@ -1,4 +1,4 @@
-package gitcopy.state_machine.states;
+package gitcopy;
 
 /**
  * Base class for construts that represent States in this State Machine.

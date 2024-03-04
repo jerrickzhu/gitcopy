@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 
 public class Main {
+
+  public static Repo newRepo;
+
   public static void main(String[] args) {
     boolean isValid = Utils.validateArgs(args);
     if (!isValid) {
@@ -16,9 +19,21 @@ public class Main {
           if (validateGitCopyExists()) {
             System.out.println("A repository already is initialized in this directory");
           } else {
-            Repo newRepo = new Repo();
+            newRepo = new Repo();
             newRepo.initializeRepo();
+            try {
+              RepoManager.saveRepo(newRepo, Repo.DEFAULT_SHA1);
+            } catch (IOException e) {
 
+            }
+
+          }
+          break;
+        case "add":
+          if (!validateGitCopyExists()) {
+            System.out.println("A repository does not exist here!");
+          } else {
+            RepoManager.loadRepo();
           }
       }
     }
