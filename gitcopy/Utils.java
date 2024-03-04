@@ -94,7 +94,7 @@ public class Utils {
         } else if (val instanceof String) {
           md.update(((String) val).getBytes(StandardCharsets.UTF_8));
         } else {
-          throw new IllegalArgumentException("improper type to sha1");
+          throw new IllegalArgumentException("Improper type to sha1");
         }
       }
       Formatter result = new Formatter();
@@ -103,7 +103,7 @@ public class Utils {
       }
       return result.toString();
     } catch (NoSuchAlgorithmException excp) {
-      throw new IllegalArgumentException("System does not support SHA-1");
+      throw new IllegalArgumentException("System doesn't support SHA-1");
     }
   }
 

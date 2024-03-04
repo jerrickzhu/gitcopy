@@ -2,15 +2,19 @@ package gitcopy;
 
 import java.io.File;
 
+import gitcopy.state_machine.GitCopyStateMachine;
+
 public class Repo {
 
   public void initializeRepo() {
 
+    GitCopyStateMachine STATE_MACHINE = new GitCopyStateMachine();
+
     // create folders
-    createFoldersForInit();
+    // createFoldersForInit();
 
     // initialize statemachine
-    // GitCopyStateMachine STATE_MACHINE = new GitCopyStateMachine();
+
     // save initial commit
     return;
   }
@@ -26,7 +30,8 @@ public class Repo {
         new File(gitCopyDirectory, ".staging"),
         new File(gitCopyDirectory, ".log"),
         new File(gitCopyDirectory, ".commits"),
-        new File(gitCopyDirectory, ".blobs")
+        new File(gitCopyDirectory, ".blobs"),
+        new File(gitCopyDirectory, ".states")
     };
 
     for (File folder : folders) {

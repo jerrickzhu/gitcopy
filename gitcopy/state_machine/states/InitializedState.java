@@ -1,4 +1,4 @@
-package gitcopy;
+package gitcopy.state_machine.states;
 
 public class InitializedState extends GitCopyState {
 
