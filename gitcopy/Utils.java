@@ -65,6 +65,50 @@ public class Utils {
   }
 
   /**
+   * General abstracted method to save objects to a file using
+   * other utility methods in this class. Starts by create file in that
+   * current directory, creates the file, then writes it to file.
+   * 
+   * @param filename      - String type that takes in the file name you want to
+   *                      give;
+   *                      should be a SHA1
+   * @param directoryPath - String type that is the directory path to create file
+   * @param classInstance - Serializable type of the instance of the class you
+   *                      pass in to serialize
+   * 
+   */
+  public static void saveObjectToFileDisk(String filename, String directoryPath, Serializable classInstance)
+      throws IOException {
+    File file = Utils.createFileInCurrentDirectory(directoryPath, filename);
+    file.createNewFile();
+    writeSerializedObjectToFile(file, classInstance);
+    System.out.println("Successfully wrote object to disk");
+  }
+
+  /**
+   * General abstract method to load objects.
+   * 
+   * @param objectType    - Type Class<T> generic. This should be a class object.
+   *                      E.g., if it's a Repo, this parameter should be
+   *                      Repo.class
+   * @param filename      - filename of the file from which the object will be
+   *                      deserialized. It's a string that specifies the name of
+   *                      the file containing the serialized object.
+   * @param directoryPath - Path of the file.
+   * @return - Casts the deserialized object to the type specified by objectType.
+   *         The cast method is called on the objectType Class object, and it
+   *         ensures that the deserialized object is of the correct type T.
+   *         Finally, the deserialized and casted object is returned from the
+   *         method.
+   * @throws IllegalArgumentException
+   */
+  public static <T extends Serializable> T loadObject(Class<T> objectType, String filename, String directoryPath)
+      throws IllegalArgumentException {
+    File file = new File(directoryPath, filename);
+    return objectType.cast(deserialize(file, objectType));
+  }
+
+  /**
    * Concatenates file path components into a file object.
    * 
    * @param directoryPath
