@@ -2,12 +2,13 @@ package gitcopy;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class Main {
 
   public static Repo newRepo;
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     boolean isValid = Utils.validateArgs(args);
     if (!isValid) {
       System.out.println("You've entered an incorrect command. Please try again.");
@@ -26,18 +27,23 @@ public class Main {
               String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
               Utils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
             } catch (IOException e) {
-
+              e.printStackTrace();
             }
 
           }
           break;
         case "add":
           if (!validateGitCopyExists()) {
-            System.out.println("A repository does not exist here!");
+            System.out.println("A repository does not exist here, so you cannot add anything to stage.");
           } else {
             // Reloads the repo instance.
             String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-            Utils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
+            newRepo = Utils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
+
+            // Take the second argument. Will need to handle other strings thereafter.
+            String[] files = Arrays.copyOfRange(args, 1, args.length);
+            newRepo.add(files);
+
           }
           break;
         case "log":

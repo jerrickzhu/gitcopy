@@ -1,5 +1,6 @@
 package gitcopy;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 public class Repo implements Serializable {
@@ -13,7 +14,7 @@ public class Repo implements Serializable {
     STATE_MACHINE = new GitCopyStateMachine();
   }
 
-  public void initializeRepo() {
+  public void initializeRepo() throws IOException {
 
     // Since we already have a REPO key, we can now transition its state to
     // InitializedState via transitionState
@@ -29,6 +30,18 @@ public class Repo implements Serializable {
 
     // Process INITIAL_COMMIT key to save files to disk.
     STATE_MACHINE.processStateCommand("INITIAL_COMMIT");
-    return;
+
+    System.out.println("Successfully initialized repository");
+  }
+
+  public void add(String[] files) throws IOException {
+    for (String file : files) {
+
+      // to do: logic to check if that file ALREADY exists in the repository
+      // otherwise, we can go ahead and have the state machine proceed
+      STATE_MACHINE.addFileAndStateToMachine(file, new StagedState());
+      STATE_MACHINE.processStateCommand(file);
+    }
+
   }
 }
