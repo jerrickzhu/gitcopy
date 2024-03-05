@@ -15,7 +15,8 @@ public class GitCopyStateMachine implements Serializable {
    */
   public GitCopyStateMachine() {
     this.currentStates = new HashMap<>();
-    this.currentStates.put("REPO", new UninitializedState());
+    GitCopyState repoState = new UninitializedState();
+    this.currentStates.put("REPO", repoState);
 
   }
 
@@ -32,6 +33,7 @@ public class GitCopyStateMachine implements Serializable {
 
     if (input == "init") {
       if (currState instanceof UninitializedState) {
+        // This line updates the REPO key to initialized state.
         addFileAndStateToMachine("REPO", new InitializedState());
       } else {
         throw new IllegalArgumentException(

@@ -33,5 +33,4 @@ public class InitializedState extends GitCopyState implements Serializable {
       }
     }
   }
-
 }

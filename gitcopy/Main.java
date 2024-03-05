@@ -22,7 +22,9 @@ public class Main {
             newRepo = new Repo();
             newRepo.initializeRepo();
             try {
-              RepoManager.saveRepo(newRepo, Repo.DEFAULT_SHA1);
+              // Saves the repository instance to disk.
+              String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
+              Utils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
             } catch (IOException e) {
 
             }
@@ -33,8 +35,13 @@ public class Main {
           if (!validateGitCopyExists()) {
             System.out.println("A repository does not exist here!");
           } else {
-            RepoManager.loadRepo();
+            // Reloads the repo instance.
+            String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
+            Utils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
           }
+          break;
+        case "log":
+
       }
     }
   }
