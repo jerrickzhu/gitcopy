@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GitCopyStateMachine implements Serializable {
-  private Map<String, GitCopyState> currentStates;
+  private Map<String, GitCopyStates> currentStates;
 
   /**
    * Initialize the state machine. Data contained in hashmap
@@ -15,42 +15,50 @@ public class GitCopyStateMachine implements Serializable {
    */
   public GitCopyStateMachine() {
     this.currentStates = new HashMap<>();
-    GitCopyState repoState = new UninitializedState();
+    GitCopyStates repoState = GitCopyStates.UNINITIALIZED;
     this.currentStates.put("REPO", repoState);
 
   }
 
-  public GitCopyState getCurrentStateOfFile(String filename) {
+  public GitCopyStates getCurrentStateOfFile(String filename) {
     return this.currentStates.get(filename);
   }
 
-  public void addFileAndStateToMachine(String filename, GitCopyState state) {
+  public boolean fileInStateMachine(String filename) {
+    if (this.currentStates.containsKey(filename)) {
+      return true;
+    }
+    return false;
+  }
+
+  public void addFileAndStateToMachine(String filename, GitCopyStates state) {
     this.currentStates.put(filename, state);
   }
 
   public void transitionState(String input, String filename) {
-    GitCopyState currState = getCurrentStateOfFile(filename);
+    GitCopyStates currState = getCurrentStateOfFile(filename);
 
     if (input == "init") {
-      if (currState instanceof UninitializedState) {
+      if (currState == GitCopyStates.UNINITIALIZED) {
         // This line updates the REPO key to initialized state.
-        addFileAndStateToMachine("REPO", new InitializedState());
+        addFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED);
       } else {
         throw new IllegalArgumentException(
             "The repository must be in an uninitialized state if you use the init command.");
       }
     } else if (input == "add") {
-      // check if the filename already exists in our statemachine hashmap
-      // if it does not, then we may add it in.
+
       // otherwise, notify that we already have this file and do not allow duplicate
       // copies of files
       return;
+    } else if (input == "commit") {
+      if (currState == GitCopyStates.STAGED) {
+        // to do: commit actions
+      }
+      // check the state of files to see if they are a StagedState.
+      // if so, we may proceed.
+      // if not, we cannot proceed.
     }
-  }
-
-  public void processStateCommand(String filename) {
-    GitCopyState currFileState = getCurrentStateOfFile(filename);
-    currFileState.processCommand();
   }
 
 }

@@ -1,7 +1,9 @@
 package gitcopy;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class Repo implements Serializable {
 
@@ -10,7 +12,7 @@ public class Repo implements Serializable {
 
   public Repo() {
     // Initialization of a GitCopyStateMachine also creates the first entry
-    // in its hashmap attribute with key "REPO" with a key of UninitializedState
+    // in its hashmap attribute with key "REPO" with a val of UninitializedState
     STATE_MACHINE = new GitCopyStateMachine();
   }
 
@@ -20,28 +22,80 @@ public class Repo implements Serializable {
     // InitializedState via transitionState
     STATE_MACHINE.transitionState("init", "REPO");
 
-    // Process that REPO key's value of IniitalizedState.
-    STATE_MACHINE.processStateCommand("REPO");
+    // Create hidden folders to store files in
+    createFoldersForInit();
 
     // We add in a new entry to have a parent commit, which is our
-    // initial commit.
-    GitCopyState initCommitState = new CommitState("init");
-    STATE_MACHINE.addFileAndStateToMachine("INITIAL_COMMIT", initCommitState);
-
-    // Process INITIAL_COMMIT key to save files to disk.
-    STATE_MACHINE.processStateCommand("INITIAL_COMMIT");
+    // initial commit. Then saves that to disk.
+    makeInitialCommit();
+    STATE_MACHINE.addFileAndStateToMachine("INITIAL_COMMIT", GitCopyStates.COMMITTED);
 
     System.out.println("Successfully initialized repository");
   }
 
   public void add(String[] files) throws IOException {
     for (String file : files) {
-
-      // to do: logic to check if that file ALREADY exists in the repository
-      // otherwise, we can go ahead and have the state machine proceed
-      STATE_MACHINE.addFileAndStateToMachine(file, new StagedState());
-      STATE_MACHINE.processStateCommand(file);
+      if (STATE_MACHINE.fileInStateMachine(file)) {
+        System.out.println(file + " is already staged!");
+        continue;
+      } else {
+        STATE_MACHINE.addFileAndStateToMachine(file, GitCopyStates.STAGED);
+        stageFile(file);
+      }
     }
+  }
+
+  public void commit(String[] files) throws IOException {
+    for (String file : files) {
+      GitCopyStates stateOfFile = STATE_MACHINE.getCurrentStateOfFile(file);
+      if (stateOfFile == GitCopyStates.COMMITTED) {
+        // to do: continue with commit
+      } else {
+        System.out
+            .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
+      }
+    }
+  }
+
+  private void createFoldersForInit() {
+    String currentDirectory = System.getProperty("user.dir");
+    File gitCopyFolder = new File(currentDirectory, ".gitcopy");
+
+    gitCopyFolder.mkdir();
+    String gitCopyDirectory = gitCopyFolder.getAbsolutePath();
+
+    File[] folders = {
+        new File(gitCopyDirectory, ".staging"),
+        new File(gitCopyDirectory, ".log"),
+        new File(gitCopyDirectory, ".commits"),
+        new File(gitCopyDirectory, ".blobs"),
+        new File(gitCopyDirectory, ".states")
+    };
+
+    for (File folder : folders) {
+      if (!folder.exists()) {
+        folder.mkdir();
+      } else {
+        System.err.println("Failed to create folder " + folder.getName());
+      }
+    }
+  }
+
+  private void makeInitialCommit() {
+    Commit initialCommit = new Commit("Initialization commit", new HashMap<>());
+    initialCommit.saveInitialCommit();
+  }
+
+  private void stageFile(String filename) throws IOException {
+
+    // Convert the file into a blob with its contents and a SHA1
+    Blob blob = new Blob(filename);
+
+    // Save the blob to disk in .blobs and .staged
+    String blobDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".blobs";
+    String stagedDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".staged";
+    Utils.saveObjectToFileDisk(blob.getBlobSHA1(), blobDirectory, blob);
+    Utils.saveObjectToFileDisk(blob.getBlobSHA1(), stagedDirectory, blob);
 
   }
 }
