@@ -53,8 +53,8 @@ public class Repo implements Serializable {
 
   public void commit(String[] files) throws IOException {
     for (String file : files) {
-      GitCopyStates stateOfFile = STATE_MACHINE.getCurrentStateOfFile(file);
-      if (stateOfFile == GitCopyStates.COMMITTED) {
+      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
+      if (fileState == GitCopyStates.STAGED) {
         // to do: continue with commit
       } else {
         System.out
@@ -75,7 +75,6 @@ public class Repo implements Serializable {
         new File(gitCopyDirectory, ".log"),
         new File(gitCopyDirectory, ".commits"),
         new File(gitCopyDirectory, ".blobs"),
-        new File(gitCopyDirectory, ".states")
     };
 
     for (File folder : folders) {
@@ -99,7 +98,7 @@ public class Repo implements Serializable {
 
     // Save the blob to disk in .blobs and .staged
     String blobDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".blobs";
-    String stagedDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".staged";
+    String stagedDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".staging";
     Utils.saveObjectToFileDisk(blob.getBlobSHA1(), blobDirectory, blob);
     Utils.saveObjectToFileDisk(blob.getBlobSHA1(), stagedDirectory, blob);
 
