@@ -6,11 +6,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 public class Commit implements Serializable {
 
   private String commitSHA1;
-  private String time;
+  private LocalDateTime time;
   private String commitMessage;
   private ArrayList<String> commitParents;
   private Map<String, String> snapshot;
@@ -26,6 +27,7 @@ public class Commit implements Serializable {
     this.commitSHA1 = Utils.sha1(message);
     this.commitParents = new ArrayList<>();
     this.commitParents.add(Repo.DEFAULT_SHA1);
+    this.time = LocalDateTime.now();
   }
 
   /** This constructor is for anything EXCEPT for initializations. */
