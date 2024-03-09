@@ -35,9 +35,15 @@ public class Repo implements Serializable {
 
   public void add(String[] files) throws IOException {
     for (String file : files) {
+      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
       if (STATE_MACHINE.fileInStateMachine(file)) {
-        System.out.println(file + " is already staged!");
-        continue;
+        if (fileState == GitCopyStates.STAGED) {
+          System.out.println(file + " is already staged!");
+          continue;
+        } else if (fileState == GitCopyStates.COMMITTED) {
+          System.out.println(file + " is already commited!");
+          continue;
+        }
       } else {
         STATE_MACHINE.addFileAndStateToMachine(file, GitCopyStates.STAGED);
         stageFile(file);
