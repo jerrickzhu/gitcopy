@@ -47,17 +47,19 @@ public class GitCopyStateMachine implements Serializable {
             "The repository must be in an uninitialized state if you use the init command.");
       }
     } else if (input == "add") {
-
-      // otherwise, notify that we already have this file and do not allow duplicate
-      // copies of files
-      return;
+      if (currState == GitCopyStates.UNSTAGED) {
+        addFileAndStateToMachine(filename, GitCopyStates.STAGED);
+      } else {
+        throw new IllegalArgumentException(
+            "The file has to be in an unstaged state to move into staged.");
+      }
     } else if (input == "commit") {
       if (currState == GitCopyStates.STAGED) {
-        // to do: commit actions
+        addFileAndStateToMachine(filename, GitCopyStates.COMMITTED);
+      } else {
+        throw new IllegalArgumentException(
+            "File must be in a staged state to be committed. Exceptions only for init.");
       }
-      // check the state of files to see if they are a StagedState.
-      // if so, we may proceed.
-      // if not, we cannot proceed.
     }
   }
 
