@@ -66,8 +66,8 @@ public class Utils {
 
   /**
    * General abstracted method to save objects to a file using
-   * other utility methods in this class. Starts by create file in that
-   * current directory, creates the file, then writes it to file.
+   * other utility methods in this class. Starts by creating file blueprint
+   * in that current directory, creates the file, then writes it to disk.
    * 
    * @param filename      - String type that takes in the file name you want to
    *                      give;
@@ -176,6 +176,13 @@ public class Utils {
     }
   }
 
+  /**
+   * Deserializes files. Usually used on reload the program in commands like add
+   * or commit.
+   * 
+   * @param File - File object to deserialize
+   * @return Deserialized object
+   */
   public static <T extends Serializable> T deserialize(File file,
       Class<T> expectedClass) {
     try {

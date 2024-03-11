@@ -31,7 +31,7 @@ public class GitCopyStateMachine implements Serializable {
     return false;
   }
 
-  public void addFileAndStateToMachine(String filename, GitCopyStates state) {
+  public void updateFileAndStateToMachine(String filename, GitCopyStates state) {
     this.currentStates.put(filename, state);
   }
 
@@ -41,24 +41,31 @@ public class GitCopyStateMachine implements Serializable {
     if (input == "init") {
       if (currState == GitCopyStates.UNINITIALIZED) {
         // This line updates the REPO key to initialized state.
-        addFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED);
+        updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED);
       } else {
         throw new IllegalArgumentException(
             "The repository must be in an uninitialized state if you use the init command.");
       }
     } else if (input == "add") {
       if (currState == GitCopyStates.UNSTAGED) {
-        addFileAndStateToMachine(filename, GitCopyStates.STAGED);
+        updateFileAndStateToMachine(filename, GitCopyStates.STAGED);
       } else {
         throw new IllegalArgumentException(
             "The file has to be in an unstaged state to move into staged.");
       }
     } else if (input == "commit") {
       if (currState == GitCopyStates.STAGED) {
-        addFileAndStateToMachine(filename, GitCopyStates.COMMITTED);
+        updateFileAndStateToMachine(filename, GitCopyStates.COMMITTED);
       } else {
         throw new IllegalArgumentException(
             "File must be in a staged state to be committed. Exceptions only for init.");
+      }
+    } else if (input == "rm") {
+      if (currState == GitCopyStates.STAGED) {
+        updateFileAndStateToMachine(filename, GitCopyStates.UNSTAGED);
+      } else {
+        throw new IllegalArgumentException(
+            "Cannot transition a file to unstaged if it's not in staged state.");
       }
     }
   }

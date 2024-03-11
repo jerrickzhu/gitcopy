@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 public class Repo implements Serializable {
 
-  public GitCopyStateMachine STATE_MACHINE;
+  private GitCopyStateMachine STATE_MACHINE;
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
 
   public Repo() {
@@ -26,9 +26,10 @@ public class Repo implements Serializable {
     createFoldersForInit();
 
     // We add in a new entry to have a parent commit, which is our
-    // initial commit. Then saves that to disk.
+    // initial commit. Then saves that to disk. Skip transition state here
+    // because there are no files to stage and this is the parent commit.
     makeInitialCommit();
-    STATE_MACHINE.addFileAndStateToMachine("INITIAL_COMMIT", GitCopyStates.COMMITTED);
+    STATE_MACHINE.updateFileAndStateToMachine("INITIAL_COMMIT", GitCopyStates.COMMITTED);
 
     System.out.println("Successfully initialized repository");
   }
@@ -45,8 +46,26 @@ public class Repo implements Serializable {
           continue;
         }
       } else {
-        STATE_MACHINE.addFileAndStateToMachine(file, GitCopyStates.STAGED);
+        STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED);
+        STATE_MACHINE.transitionState("add", file);
         stageFile(file);
+      }
+    }
+  }
+
+  public void remove(String[] files) throws IOException {
+    for (String file : files) {
+      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
+      if (STATE_MACHINE.fileInStateMachine(file)) {
+        if (fileState == GitCopyStates.STAGED) {
+          // to do:
+          // 1. remove the file from the .staging folder
+          // 2. remove blob
+
+        } else {
+          // to do: tell user they can't remove a file that's not staged.
+          // if it's already committed, they should checkout a prev commit
+        }
       }
     }
   }
