@@ -1,5 +1,6 @@
 package gitcopy;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,13 +54,21 @@ public class GitCopyStateMachine implements Serializable {
     this.currentStates.put(filename, state);
   }
 
+  /** Removes file from the hashmap in state machine. */
+  private void removeFile(String filename) {
+    if (fileInStateMachine(filename)) {
+      this.currentStates.remove(filename);
+    }
+  }
+
   /**
    * Transitions state depending on the input given and the current state.
    * 
    * @param input
    * @param filename
+   * @throws IOException
    */
-  public void transitionState(String input, String filename) {
+  public void transitionState(String input, String filename) throws IOException {
     GitCopyStates currState = getCurrentStateOfFile(filename);
 
     if (input == "init") {
@@ -87,6 +96,11 @@ public class GitCopyStateMachine implements Serializable {
     } else if (input == "rm") {
       if (currState == GitCopyStates.STAGED) {
         updateFileAndStateToMachine(filename, GitCopyStates.UNSTAGED);
+        if (getCurrentStateOfFile(filename) == GitCopyStates.UNSTAGED) {
+          removeFile(filename);
+        } else {
+          throw new IOException("Problem in removing file. File is not in an unstaged state to be rmoved.");
+        }
       } else {
         throw new IllegalArgumentException(
             "Cannot transition a file to unstaged if it's not in staged state.");
