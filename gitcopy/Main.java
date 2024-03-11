@@ -9,7 +9,7 @@ public class Main {
   public static Repo newRepo;
 
   public static void main(String[] args) throws IOException {
-    boolean isValid = Utils.validateArgs(args);
+    boolean isValid = validateArgs(args);
     if (!isValid) {
       System.out.println("You've entered an incorrect command. Please try again.");
       System.exit(0);
@@ -25,7 +25,7 @@ public class Main {
             try {
               // Saves the repository instance to disk.
               String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-              Utils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
+              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
             } catch (IOException e) {
               e.printStackTrace();
             }
@@ -38,7 +38,7 @@ public class Main {
           } else {
             // Reloads the repo instance.
             String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-            newRepo = Utils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
+            newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
 
             // Take the second argument. Will need to handle other strings thereafter.
             String[] files = Arrays.copyOfRange(args, 1, args.length);
@@ -59,6 +59,27 @@ public class Main {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Function that validates if the arguments (commands entered) are valid. Valid
+   * commands include: init, add, commit
+   * 
+   * @param args
+   * @return boolean
+   */
+  private static boolean validateArgs(String[] args) {
+    boolean valid;
+    switch (args[0]) {
+      case "init":
+      case "add":
+      case "commit":
+        valid = true;
+        break;
+      default:
+        valid = false;
+    }
+    return valid;
   }
 
 }

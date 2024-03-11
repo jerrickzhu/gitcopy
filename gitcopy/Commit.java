@@ -24,7 +24,7 @@ public class Commit implements Serializable {
   public Commit(String message, Map<String, String> snapMap) {
     this.commitMessage = message;
     this.snapshot = snapMap;
-    this.commitSHA1 = Utils.sha1(message);
+    this.commitSHA1 = FileUtils.sha1(message);
     this.commitParents = new ArrayList<>();
     this.commitParents.add(Repo.DEFAULT_SHA1);
     this.time = LocalDateTime.now();
@@ -49,7 +49,7 @@ public class Commit implements Serializable {
       Commit commit = new Commit("Initial Commit for initialization", new HashMap<>());
 
       // Writes initial commit to disk in commits folder
-      Utils.saveObjectToFileDisk(commit.getSHA1(), COMMIT_DIRECTORY, commit);
+      FileUtils.saveObjectToFileDisk(commit.getSHA1(), COMMIT_DIRECTORY, commit);
     } catch (IOException e) {
       e.printStackTrace();
     }

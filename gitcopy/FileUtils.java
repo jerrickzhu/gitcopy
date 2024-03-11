@@ -21,7 +21,7 @@ import java.util.List;
  * This class provides some functions considered as utilities for
  * streamlining the build of gitcopy.
  */
-public class Utils {
+public class FileUtils {
 
   /**
    * Converts the file into an array of bytes.
@@ -44,27 +44,6 @@ public class Utils {
   }
 
   /**
-   * Function that validates if the arguments (commands entered) are valid. Valid
-   * commands include: init, add, commit
-   * 
-   * @param args
-   * @return boolean
-   */
-  public static boolean validateArgs(String[] args) {
-    boolean valid;
-    switch (args[0]) {
-      case "init":
-      case "add":
-      case "commit":
-        valid = true;
-        break;
-      default:
-        valid = false;
-    }
-    return valid;
-  }
-
-  /**
    * General abstracted method to save objects to a file using
    * other utility methods in this class. Starts by creating file blueprint
    * in that current directory, creates the file, then writes it to disk.
@@ -79,7 +58,7 @@ public class Utils {
    */
   public static void saveObjectToFileDisk(String filename, String directoryPath, Serializable classInstance)
       throws IOException {
-    File file = Utils.createFileInCurrentDirectory(directoryPath, filename);
+    File file = createFileInCurrentDirectory(directoryPath, filename);
     file.createNewFile();
     writeSerializedObjectToFile(file, classInstance);
     System.out.println("Successfully wrote object to disk");

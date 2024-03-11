@@ -10,9 +10,9 @@ public class Blob implements Serializable {
 
   public Blob(String filename) {
     this.fileName = filename;
-    File file = Utils.createFileInCurrentDirectory(".", filename);
-    this.fileContent = Utils.convertFileToBytes(file);
-    this.blobSHA1 = Utils.sha1(this.fileContent);
+    File file = FileUtils.createFileInCurrentDirectory(".", filename);
+    this.fileContent = FileUtils.convertFileToBytes(file);
+    this.blobSHA1 = FileUtils.sha1(this.fileContent);
   }
 
   public String getBlobSHA1() {
