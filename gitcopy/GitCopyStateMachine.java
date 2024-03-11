@@ -20,10 +20,22 @@ public class GitCopyStateMachine implements Serializable {
 
   }
 
+  /**
+   * Retrieves the state of a file.
+   * 
+   * @param filename
+   * @return GitCopyStates, the state of the file.
+   */
   public GitCopyStates getCurrentStateOfFile(String filename) {
     return this.currentStates.get(filename);
   }
 
+  /**
+   * Checks if the file is tracked.
+   * 
+   * @param filename
+   * @return returns true or false if file is tracked
+   */
   public boolean fileInStateMachine(String filename) {
     if (this.currentStates.containsKey(filename)) {
       return true;
@@ -31,10 +43,22 @@ public class GitCopyStateMachine implements Serializable {
     return false;
   }
 
+  /**
+   * Add new files or update files that are tracked in state machine.
+   * 
+   * @param filename
+   * @param state    - The State you need to add in for this file
+   */
   public void updateFileAndStateToMachine(String filename, GitCopyStates state) {
     this.currentStates.put(filename, state);
   }
 
+  /**
+   * Transitions state depending on the input given and the current state.
+   * 
+   * @param input
+   * @param filename
+   */
   public void transitionState(String input, String filename) {
     GitCopyStates currState = getCurrentStateOfFile(filename);
 
