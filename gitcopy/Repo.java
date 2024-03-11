@@ -41,19 +41,15 @@ public class Repo implements Serializable {
   public void add(String[] files) throws IOException {
     for (String file : files) {
       GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
-      if (STATE_MACHINE.fileInStateMachine(file)) {
-        if (fileState == GitCopyStates.STAGED) {
-          System.out.println(file + " is already staged!");
-          continue;
-        } else if (fileState == GitCopyStates.COMMITTED) {
-          System.out.println(file + " is already commited!");
-          continue;
-        }
-      } else {
-        STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED);
-        STATE_MACHINE.transitionState("add", file);
-        stageFile(file);
-      }
+      STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED);
+      STATE_MACHINE.transitionState("add", file);
+
+      // Convert the file into a blob with its contents and a SHA1
+      Blob blob = new Blob(file);
+      fileBlobMap.put(file, blob);
+
+      stageFile(file, blob);
+
     }
   }
 
@@ -116,16 +112,13 @@ public class Repo implements Serializable {
     initialCommit.saveInitialCommit();
   }
 
-  private void stageFile(String filename) throws IOException {
-
-    // Convert the file into a blob with its contents and a SHA1
-    Blob blob = new Blob(filename);
+  private void stageFile(String filename, Blob blob) throws IOException {
 
     // Save the blob to disk in .blobs and .staged
     String blobDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".blobs";
     String stagedDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".staging";
     FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), blobDirectory, blob);
     FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), stagedDirectory, blob);
-
   }
+
 }
