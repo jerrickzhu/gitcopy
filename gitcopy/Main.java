@@ -20,6 +20,7 @@ public class Main {
           if (validateGitCopyExists()) {
             System.out.println("A repository already is initialized in this directory");
           } else {
+            System.out.println("if added, problem here");
             newRepo = new Repo();
             newRepo.initializeRepo();
             try {
@@ -29,7 +30,6 @@ public class Main {
             } catch (IOException e) {
               e.printStackTrace();
             }
-
           }
           break;
         case "add":
@@ -39,10 +39,13 @@ public class Main {
             // Reloads the repo instance.
             try {
               String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
+              System.out.println(repoDirectory);
               newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
               // Take the second argument. Will need to handle other strings thereafter.
               String[] files = Arrays.copyOfRange(args, 1, args.length);
               newRepo.add(files);
+              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
+
             } catch (IOException e) {
               e.printStackTrace();
             }
