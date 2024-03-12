@@ -8,9 +8,13 @@ import java.util.Map;
 
 public class Repo implements Serializable {
 
-  private static GitCopyStateMachine STATE_MACHINE;
+  private GitCopyStateMachine STATE_MACHINE;
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
-  private static Map<String, Blob> fileBlobMap;
+  private Map<String, Blob> fileBlobMap;
+  private final String BLOB_DIRECTORY = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator
+      + ".blobs";
+  private final String STAGED_DIRECTORY = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator
+      + ".staging";
 
   public Repo() {
     // Initialization of a GitCopyStateMachine also creates the first entry
@@ -40,8 +44,18 @@ public class Repo implements Serializable {
 
   public void add(String[] files) throws IOException {
     for (String file : files) {
-      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
+      if (fileBlobMap != null && fileBlobMap.containsKey(file)) {
+        // check if file with same content already exists in staging area. SHA1 should
+        // be equal if so
+        String blobSHA1OfFile = fileBlobMap.get(file).getBlobSHA1();
+        File stagedFilePath = FileUtils.createFileInCurrentDirectory(STAGED_DIRECTORY, blobSHA1OfFile);
+        if (stagedFilePath.exists()) {
+          continue;
+        }
+      }
       STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED);
+
+      // transition state to staged
       STATE_MACHINE.transitionState("add", file);
 
       // Convert the file into a blob with its contents and a SHA1
@@ -49,7 +63,6 @@ public class Repo implements Serializable {
       fileBlobMap.put(file, blob);
 
       stageFile(file, blob);
-
     }
   }
 
@@ -58,6 +71,9 @@ public class Repo implements Serializable {
       GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
       if (STATE_MACHINE.fileInStateMachine(file)) {
         if (fileState == GitCopyStates.STAGED) {
+
+          String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
+
           // to do:
           // 1. remove the blob reference from the .staging folder
           // 2. remove blob entirely
@@ -77,6 +93,7 @@ public class Repo implements Serializable {
       GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
       if (fileState == GitCopyStates.STAGED) {
         // to do: continue with commit
+        // to do: remove the sha1 from the .staging hidden folder
       } else {
         System.out
             .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
@@ -115,10 +132,8 @@ public class Repo implements Serializable {
   private void stageFile(String filename, Blob blob) throws IOException {
 
     // Save the blob to disk in .blobs and .staged
-    String blobDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".blobs";
-    String stagedDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator + ".staging";
-    FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), blobDirectory, blob);
-    FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), stagedDirectory, blob);
+    FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), BLOB_DIRECTORY, blob);
+    FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), STAGED_DIRECTORY, blob);
   }
 
 }

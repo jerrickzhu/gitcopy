@@ -37,12 +37,15 @@ public class Main {
             System.out.println("A repository does not exist here, so you cannot add anything to stage.");
           } else {
             // Reloads the repo instance.
-            String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-            newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
-
-            // Take the second argument. Will need to handle other strings thereafter.
-            String[] files = Arrays.copyOfRange(args, 1, args.length);
-            newRepo.add(files);
+            try {
+              String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
+              newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
+              // Take the second argument. Will need to handle other strings thereafter.
+              String[] files = Arrays.copyOfRange(args, 1, args.length);
+              newRepo.add(files);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
 
           }
           break;

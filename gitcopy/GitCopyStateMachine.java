@@ -18,7 +18,6 @@ public class GitCopyStateMachine implements Serializable {
     this.currentStates = new HashMap<>();
     GitCopyStates repoState = GitCopyStates.UNINITIALIZED;
     this.currentStates.put("REPO", repoState);
-
   }
 
   /**

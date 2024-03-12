@@ -100,6 +100,13 @@ public class FileUtils {
     return constructPath.toFile();
   }
 
+  public static boolean deleteFile(File file) {
+    if (file.isDirectory() == false) {
+      return file.delete();
+    }
+    return false;
+  }
+
   /**
    * Calculates the SHA-1 hash of the concatenation of the provided objects
    * whether they are byte arrays or strings.
@@ -151,7 +158,7 @@ public class FileUtils {
       objectStream.close();
       return outputStream.toByteArray();
     } catch (IOException exception) {
-      throw new Error("Error serializiing");
+      throw new Error("Error serializing");
     }
   }
 
