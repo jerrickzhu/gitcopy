@@ -7,6 +7,7 @@ public class Blob implements Serializable {
   private String fileName;
   private byte[] fileContent;
   private String blobSHA1;
+  private final File ROOT_DIRECTORY = FileUtils.findGitCopyRootDirectory();
 
   public Blob(String filename) {
     this.fileName = filename;

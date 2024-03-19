@@ -9,11 +9,12 @@ import java.util.Map;
 public class Repo implements Serializable {
 
   private GitCopyStateMachine STATE_MACHINE;
+  private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   private Map<String, Blob> fileBlobMap;
-  private final String BLOB_DIRECTORY = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator
+  private final String BLOB_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy" + File.separator
       + ".blobs";
-  private final String STAGED_DIRECTORY = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator
+  private final String STAGED_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy" + File.separator
       + ".staging";
 
   public Repo() {
@@ -28,6 +29,8 @@ public class Repo implements Serializable {
 
     // Since we already have a REPO key, we can now transition its state to
     // InitializedState via transitionState
+    File currentDirectory = new File(".");
+
     STATE_MACHINE.transitionState("init", "REPO");
 
     // Create hidden folders to store files in
@@ -37,7 +40,6 @@ public class Repo implements Serializable {
     // initial commit. Then saves that to disk. Skip transition state here
     // because there are no files to stage and this is the parent commit.
     makeInitialCommit();
-    STATE_MACHINE.updateFileAndStateToMachine("INITIAL_COMMIT", GitCopyStates.COMMITTED);
 
     System.out.println("Successfully initialized repository");
   }
@@ -53,7 +55,7 @@ public class Repo implements Serializable {
           continue;
         }
       }
-      STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED);
+      STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED, false);
 
       // transition state to staged
       STATE_MACHINE.transitionState("add", file);
@@ -68,22 +70,23 @@ public class Repo implements Serializable {
 
   public void remove(String[] files) throws IOException {
     for (String file : files) {
-      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
       if (STATE_MACHINE.fileInStateMachine(file)) {
+        GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
         if (fileState == GitCopyStates.STAGED) {
 
           String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
-
-          // to do:
-          // 1. remove the blob reference from the .staging folder
-          // 2. remove blob entirely
-          // 3. transition the state - we should probably remove the file from state
-          // --- machine hashmap altogether
+          fileBlobMap.remove(file);
+          File blobDirectoryFile = new File(BLOB_DIRECTORY + File.separator + blobSHA1);
+          File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
+          FileUtils.deleteFile(blobDirectoryFile);
+          FileUtils.deleteFile(blobStagedFile);
+          STATE_MACHINE.transitionState("rm", file);
 
         } else {
-          // to do: tell user they can't remove a file that's not staged.
-          // if it's already committed, they should checkout a prev commit
+          System.out.println("Can't remove this file. Must be staged.");
         }
+      } else {
+        System.out.println("This file does not exist in the repository.");
       }
     }
   }

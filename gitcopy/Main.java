@@ -7,6 +7,8 @@ import java.util.Arrays;
 public class Main {
 
   public static Repo newRepo;
+  public final static String REPO_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath() + File.separator
+      + ".gitcopy";
 
   public static void main(String[] args) throws IOException {
     boolean isValid = validateArgs(args);
@@ -17,54 +19,60 @@ public class Main {
       String command = args[0];
       switch (command) {
         case "init":
-          if (validateGitCopyExists()) {
+          if (FileUtils.validateGitCopyExists()) {
             System.out.println("A repository already is initialized in this directory");
           } else {
-            System.out.println("if added, problem here");
             newRepo = new Repo();
             newRepo.initializeRepo();
             try {
               // Saves the repository instance to disk.
-              String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
+              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
             } catch (IOException e) {
               e.printStackTrace();
             }
           }
           break;
         case "add":
-          if (!validateGitCopyExists()) {
+          if (!FileUtils.validateGitCopyExists()) {
             System.out.println("A repository does not exist here, so you cannot add anything to stage.");
           } else {
-            // Reloads the repo instance.
             try {
-              String repoDirectory = System.getProperty("user.dir") + File.separator + ".gitcopy";
-              System.out.println(repoDirectory);
-              newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, repoDirectory);
+              // Reloads the repo instance.
+              newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
               // Take the second argument. Will need to handle other strings thereafter.
               String[] files = Arrays.copyOfRange(args, 1, args.length);
               newRepo.add(files);
-              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, repoDirectory, newRepo);
+
+              // Save repository instance ot disk
+              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
 
             } catch (IOException e) {
               e.printStackTrace();
             }
+          }
+          break;
+        case "rm":
+          if (!FileUtils.validateGitCopyExists()) {
+            System.out.println("A repository doesn't exist, so we cannot remove anything.");
+          } else {
+            try {
+              // Reloads the repo instance.
+              newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
+              // Take the second argument. Will need to handle other strings thereafter.
+              String[] files = Arrays.copyOfRange(args, 1, args.length);
+              newRepo.remove(files);
 
+              // Save repository instance
+              FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
           }
           break;
         case "log":
 
       }
     }
-  }
-
-  public static boolean validateGitCopyExists() {
-    String currentDirectory = System.getProperty("user.dir");
-    File gitCopyFolder = new File(currentDirectory, ".gitcopy");
-    if (gitCopyFolder.exists()) {
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -80,6 +88,7 @@ public class Main {
       case "init":
       case "add":
       case "commit":
+      case "rm":
         valid = true;
         break;
       default:

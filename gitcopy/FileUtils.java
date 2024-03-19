@@ -101,10 +101,39 @@ public class FileUtils {
   }
 
   public static boolean deleteFile(File file) {
-    if (file.isDirectory() == false) {
-      return file.delete();
+    if (file.isDirectory()) {
+      System.out.println("You can't delete a directory");
+      return false;
     }
-    return false;
+    return file.delete();
+  }
+
+  public static boolean isFileInCurrDirectory(File file) {
+    return file.exists() && !file.isDirectory();
+  }
+
+  public static boolean isGitCopyDirectory(File directory) {
+    File gitCopyFolder = new File(directory, ".gitcopy");
+    return gitCopyFolder.exists();
+  }
+
+  public static File findGitCopyRootDirectory() {
+    File currDirectory = new File(System.getProperty("user.dir"));
+    while (currDirectory != null && !isGitCopyDirectory(currDirectory)) {
+      File parentDirectory = currDirectory.getParentFile();
+      // if the parent directory is null, we haven't found the root, so return
+      // current working directory
+      if (parentDirectory == null) {
+        return new File(System.getProperty("user.dir"));
+      }
+      currDirectory = parentDirectory;
+    }
+    return currDirectory;
+  }
+
+  public static boolean validateGitCopyExists() {
+    File gitCopy = findGitCopyRootDirectory();
+    return isGitCopyDirectory(gitCopy);
   }
 
   /**
