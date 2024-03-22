@@ -3,6 +3,7 @@ package gitcopy;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,25 +14,37 @@ public class Commit implements Serializable {
   private String commitSHA1;
   private LocalDateTime time;
   private String commitMessage;
-  private ArrayList<String> commitParents;
+  private ArrayList<String> commitParents = new ArrayList<>();
   private Map<String, String> snapshot;
   private final String COMMIT_DIRECTORY = System.getProperty("user.dir") + File.separator + ".gitcopy" + File.separator
       + ".commits";
 
   /** Constructors */
 
-  /** This constructor is only for initializations. */
+  /**
+   * This constructor is only for initializations.
+   * 
+   * @throws NoSuchAlgorithmException
+   */
   public Commit(String message, Map<String, String> snapMap) {
     this.commitMessage = message;
     this.snapshot = snapMap;
     this.commitSHA1 = FileUtils.sha1(message);
-    this.commitParents = new ArrayList<>();
     this.commitParents.add(Repo.DEFAULT_SHA1);
     this.time = LocalDateTime.now();
   }
 
-  /** This constructor is for anything EXCEPT for initializations. */
-  public Commit() {
+  /**
+   * This constructor is for anything EXCEPT for initializations.
+   * 
+   * @throws NoSuchAlgorithmException
+   */
+  public Commit(String message, Map<String, String> snapMap, String parent) {
+    this.commitMessage = message;
+    this.snapshot = snapMap;
+    this.commitSHA1 = FileUtils.sha1();
+    this.commitParents.add(parent);
+    this.time = LocalDateTime.now();
 
   }
 
@@ -41,18 +54,17 @@ public class Commit implements Serializable {
 
   /**
    * SAVE METHODS: Encapsulating save methods to their distinct behaviors below.
+   * 
+   *
    */
 
-  public void saveInitialCommit() {
+  public void saveCommit() {
     try {
-      // Creates the first commit for initialization using the init constructor
-      Commit commit = new Commit("Initial Commit for initialization", new HashMap<>());
-
-      // Writes initial commit to disk in commits folder
-      FileUtils.saveObjectToFileDisk(commit.getSHA1(), COMMIT_DIRECTORY, commit);
+      FileUtils.saveObjectToFileDisk(this.getSHA1(), COMMIT_DIRECTORY, this);
     } catch (IOException e) {
       e.printStackTrace();
     }
+
   }
 
 }
