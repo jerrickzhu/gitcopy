@@ -30,6 +30,11 @@ public class GitCopyStateMachine implements Serializable {
     return this.currentStates.get(filename);
   }
 
+  /** Get files in state machine. */
+  public Map<String, GitCopyStates> getFiles() {
+    return this.currentStates;
+  }
+
   /**
    * Checks if the file is tracked.
    * 
@@ -82,7 +87,7 @@ public class GitCopyStateMachine implements Serializable {
             "The repository must be in an uninitialized state if you use the init command.");
       }
     } else if (input == "add") {
-      if (currState == GitCopyStates.UNSTAGED) {
+      if (currState == GitCopyStates.UNSTAGED || currState == GitCopyStates.COMMITTED) {
         updateFileAndStateToMachine(filename, GitCopyStates.STAGED, false);
       } else {
         throw new IllegalArgumentException(
