@@ -22,14 +22,12 @@ public class Repo implements Serializable {
     // in its hashmap attribute with key "REPO" with a val of UninitializedState
     STATE_MACHINE = new GitCopyStateMachine();
     fileBlobMap = new HashMap<>();
-
   }
 
   public void initializeRepo() throws IOException {
 
     // Since we already have a REPO key, we can now transition its state to
     // InitializedState via transitionState
-    File currentDirectory = new File(".");
 
     STATE_MACHINE.transitionState("init", "REPO");
 
@@ -39,7 +37,9 @@ public class Repo implements Serializable {
     // We add in a new entry to have a parent commit, which is our
     // initial commit. Then saves that to disk. Skip transition state here
     // because there are no files to stage and this is the parent commit.
-    makeInitialCommit();
+    Commit initialCommit = makeInitialCommit();
+    Head.setGlobalHead("master", initialCommit);
+    Head.setBranchHead("master", initialCommit);
 
     System.out.println("Successfully initialized repository");
   }
@@ -74,6 +74,8 @@ public class Repo implements Serializable {
         GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
         if (fileState == GitCopyStates.STAGED) {
 
+          // to do: refactor later to break into better encapsulated functions
+
           String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
           fileBlobMap.remove(file);
           File blobDirectoryFile = new File(BLOB_DIRECTORY + File.separator + blobSHA1);
@@ -93,13 +95,17 @@ public class Repo implements Serializable {
 
   public void commit(String[] files) throws IOException {
     for (String file : files) {
-      GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
-      if (fileState == GitCopyStates.STAGED) {
-        // to do: continue with commit
-        // to do: remove the sha1 from the .staging hidden folder
+      if (STATE_MACHINE.fileInStateMachine(file)) {
+        GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
+        if (fileState == GitCopyStates.STAGED) {
+          // to do: continue with commit
+          // to do: remove the sha1 from the .staging hidden folder
+        } else {
+          System.out
+              .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
+        }
       } else {
-        System.out
-            .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
+        System.out.println("The file doesn't exist in this repository.");
       }
     }
   }
@@ -116,6 +122,7 @@ public class Repo implements Serializable {
         new File(gitCopyDirectory, ".log"),
         new File(gitCopyDirectory, ".commits"),
         new File(gitCopyDirectory, ".blobs"),
+        new File(gitCopyDirectory, ".branches")
     };
 
     for (File folder : folders) {
@@ -127,9 +134,10 @@ public class Repo implements Serializable {
     }
   }
 
-  private void makeInitialCommit() {
+  private Commit makeInitialCommit() {
     Commit initialCommit = new Commit("Initialization commit", new HashMap<>());
     initialCommit.saveInitialCommit();
+    return initialCommit;
   }
 
   private void stageFile(String filename, Blob blob) throws IOException {
