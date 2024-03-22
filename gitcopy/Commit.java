@@ -42,7 +42,7 @@ public class Commit implements Serializable {
   public Commit(String message, Map<String, String> snapMap, String parent) {
     this.commitMessage = message;
     this.snapshot = snapMap;
-    this.commitSHA1 = FileUtils.sha1();
+    this.commitSHA1 = FileUtils.sha1(snapMap + message);
     this.commitParents.add(parent);
     this.time = LocalDateTime.now();
 
