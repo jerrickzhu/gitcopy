@@ -19,55 +19,18 @@ public class Main {
       String command = args[0];
       switch (command) {
         case "init":
-          if (FileUtils.validateGitCopyExists()) {
-            System.out.println("A repository already is initialized in this directory");
-          } else {
-            newRepo = new Repo();
-            newRepo.initializeRepo();
-            // Saves the repository instance to disk.
-            FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
-          }
+          handleInit();
           break;
         case "add":
-          if (!FileUtils.validateGitCopyExists()) {
-            System.out.println("A repository does not exist here, so you cannot add anything to stage.");
-          } else {
-            // Reloads the repo instance.
-            newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
-            // Take the second argument. Will need to handle other strings thereafter.
-            String[] files = Arrays.copyOfRange(args, 1, args.length);
-            newRepo.add(files);
-
-            // Save repository instance ot disk
-            FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
-          }
+          handleAdd(args);
           break;
         case "rm":
-          if (!FileUtils.validateGitCopyExists()) {
-            System.out.println("A repository doesn't exist, so we cannot remove anything.");
-          } else {
-            // Reloads the repo instance.
-            newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
-            // Take the second argument. Will need to handle other strings thereafter.
-            String[] files = Arrays.copyOfRange(args, 1, args.length);
-            newRepo.remove(files);
-
-            // Save repository instance
-            FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
-
-          }
+          handleRemove(args);
           break;
         case "commit":
-          if (!FileUtils.validateGitCopyExists()) {
-            System.out.println("A repository doesn't exist. Cannot commit anything.");
-          } else {
-
-            newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
-            String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-            newRepo.commit(message);
-            FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
-
-          }
+          handleCommit(args);
+          break;
+        case "branch":
           break;
         case "log":
 
@@ -89,12 +52,68 @@ public class Main {
       case "add":
       case "commit":
       case "rm":
+      case "branch":
         valid = true;
         break;
       default:
         valid = false;
     }
     return valid;
+  }
+
+  private static void handleInit() throws IOException {
+    if (FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository already is initialized in this directory");
+    } else {
+      newRepo = new Repo();
+      newRepo.initializeRepo();
+      saveRepoToDisk();
+    }
+  }
+
+  private static void handleAdd(String[] args) throws IOException {
+    if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository does not exist here, so you cannot add anything to stage.");
+    } else {
+      loadRepoFromDisk();
+      // Take the second argument. Will need to handle other strings thereafter.
+      String[] files = Arrays.copyOfRange(args, 1, args.length);
+      newRepo.add(files);
+      saveRepoToDisk();
+    }
+  }
+
+  private static void handleRemove(String[] args) throws IOException {
+    if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository doesn't exist, so we cannot remove anything.");
+    } else {
+      loadRepoFromDisk();
+      // Take the second argument. Will need to handle other strings thereafter.
+      String[] files = Arrays.copyOfRange(args, 1, args.length);
+      newRepo.remove(files);
+
+      saveRepoToDisk();
+    }
+  }
+
+  private static void handleCommit(String[] args) throws IOException {
+    if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository doesn't exist. Cannot commit anything.");
+    } else {
+      loadRepoFromDisk();
+      String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+      newRepo.commit(message);
+      saveRepoToDisk();
+    }
+  }
+
+  private static void saveRepoToDisk() throws IOException {
+    FileUtils.saveObjectToFileDisk(Repo.DEFAULT_SHA1, REPO_DIRECTORY, newRepo);
+  }
+
+  private static void loadRepoFromDisk() throws IOException {
+    newRepo = FileUtils.loadObject(Repo.class, Repo.DEFAULT_SHA1, REPO_DIRECTORY);
+
   }
 
 }
