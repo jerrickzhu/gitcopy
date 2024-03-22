@@ -10,12 +10,12 @@ public class Repo implements Serializable {
 
   private GitCopyStateMachine STATE_MACHINE;
   private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
+  private final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   private Map<String, Blob> fileBlobMap;
-  private final String BLOB_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy" + File.separator
-      + ".blobs";
-  private final String STAGED_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy" + File.separator
-      + ".staging";
+  private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
+  private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
+  private final String COMMIT_DIRECOTRY = GITCOPY_DIRECTORY + File.separator + ".commits";
 
   public Repo() {
     // Initialization of a GitCopyStateMachine also creates the first entry
@@ -93,21 +93,32 @@ public class Repo implements Serializable {
     }
   }
 
-  public void commit(String[] files) throws IOException {
-    for (String file : files) {
-      if (STATE_MACHINE.fileInStateMachine(file)) {
-        GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
-        if (fileState == GitCopyStates.STAGED) {
-          // to do: continue with commit
-          // to do: remove the sha1 from the .staging hidden folder
-        } else {
-          System.out
-              .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
-        }
+  public void commit(String message) throws IOException {
+    Map<String, String> snapMap = new HashMap<>();
+    Map<String, GitCopyStates> files = STATE_MACHINE.getFiles();
+
+    for (Map.Entry<String, GitCopyStates> entry : files.entrySet()) {
+      String file = entry.getKey();
+      GitCopyStates state = entry.getValue();
+      if (file.equals("REPO")) {
+        continue;
+      }
+      if (state == GitCopyStates.STAGED) {
+        String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
+        snapMap.put(file, blobSHA1);
+        STATE_MACHINE.transitionState("commit", file);
+        File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
+        FileUtils.deleteFile(blobStagedFile);
       } else {
-        System.out.println("The file doesn't exist in this repository.");
+        System.out
+            .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
       }
     }
+    String lastCommitSHA1 = Head.getGlobalHeadCommit();
+    Commit newCommit = new Commit(message, snapMap, lastCommitSHA1);
+    newCommit.saveCommit();
+
+    // to do: move global head pointer
   }
 
   private void createFoldersForInit() {
@@ -136,7 +147,7 @@ public class Repo implements Serializable {
 
   private Commit makeInitialCommit() {
     Commit initialCommit = new Commit("Initialization commit", new HashMap<>());
-    initialCommit.saveInitialCommit();
+    initialCommit.saveCommit();
     return initialCommit;
   }
 
