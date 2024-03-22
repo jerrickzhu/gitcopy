@@ -3,9 +3,7 @@ package gitcopy;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.time.LocalDateTime;
 
@@ -24,7 +22,6 @@ public class Commit implements Serializable {
   /**
    * This constructor is only for initializations.
    * 
-   * @throws NoSuchAlgorithmException
    */
   public Commit(String message, Map<String, String> snapMap) {
     this.commitMessage = message;
@@ -37,7 +34,6 @@ public class Commit implements Serializable {
   /**
    * This constructor is for anything EXCEPT for initializations.
    * 
-   * @throws NoSuchAlgorithmException
    */
   public Commit(String message, Map<String, String> snapMap, String parent) {
     this.commitMessage = message;
