@@ -92,7 +92,7 @@ public class FileUtils {
    * 
    * @param directoryPath
    * @param filename
-   * @return
+   * @return the file path
    */
   public static File createFileInCurrentDirectory(
       String directoryPath, String... filename) {

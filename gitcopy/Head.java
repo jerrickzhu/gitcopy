@@ -19,7 +19,8 @@ public class Head {
     FileUtils.saveObjectToFileDisk(branchName, branchFolderPath, branch);
   }
 
-  public static String getGlobalHeadCommit() {
+  public static String getGlobalHeadCommitSHA1() {
+    // rename method later for better clarity
     Branch branch = FileUtils.loadObject(Branch.class, "HEAD", GITCOPY_FOLDER);
     return branch.getCommitHeadSHA1();
   }

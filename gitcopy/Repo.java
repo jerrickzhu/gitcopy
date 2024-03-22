@@ -114,7 +114,7 @@ public class Repo implements Serializable {
             .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
       }
     }
-    String lastCommitSHA1 = Head.getGlobalHeadCommit();
+    String lastCommitSHA1 = Head.getGlobalHeadCommitSHA1();
     Commit newCommit = new Commit(message, snapMap, lastCommitSHA1);
     newCommit.saveCommit();
 

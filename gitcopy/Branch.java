@@ -11,4 +11,13 @@ public class Branch implements Serializable {
     this.name = name;
     this.head = commit;
   }
+
+  public String getName() {
+    return this.name;
+  }
+
+  public String getCommitHeadSHA1() {
+    return this.head.getSHA1();
+  }
+
 }
