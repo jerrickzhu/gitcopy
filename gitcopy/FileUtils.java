@@ -61,7 +61,6 @@ public class FileUtils {
     File file = createFileInCurrentDirectory(directoryPath, filename);
     file.createNewFile();
     writeSerializedObjectToFile(file, classInstance);
-    System.out.println("Successfully wrote object to disk");
   }
 
   /**
