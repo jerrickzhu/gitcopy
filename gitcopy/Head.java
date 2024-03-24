@@ -20,9 +20,13 @@ public class Head {
   }
 
   public static String getGlobalHeadCommitSHA1() {
-    // rename method later for better clarity
     Branch branch = FileUtils.loadObject(Branch.class, "HEAD", GITCOPY_FOLDER);
     return branch.getCommitHeadSHA1();
+  }
+
+  public static Commit getGlobalHeadCommit() {
+    Branch branch = FileUtils.loadObject(Branch.class, "HEAD", GITCOPY_FOLDER);
+    return branch.getHead();
   }
 
 }
