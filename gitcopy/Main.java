@@ -31,6 +31,9 @@ public class Main {
           handleCommit(args);
           break;
         case "branch":
+          handleBranch(args);
+          break;
+        case "checkout":
           break;
         case "log":
 
@@ -53,6 +56,7 @@ public class Main {
       case "commit":
       case "rm":
       case "branch":
+      case "checkout":
         valid = true;
         break;
       default:
@@ -88,7 +92,8 @@ public class Main {
       System.out.println("A repository doesn't exist, so we cannot remove anything.");
     } else {
       loadRepoFromDisk();
-      // Take the second argument. Will need to handle other strings thereafter.
+      // Take the second argument. Will need to handle other strings thereafter, like
+      // *.
       String[] files = Arrays.copyOfRange(args, 1, args.length);
       newRepo.remove(files);
 
@@ -103,6 +108,16 @@ public class Main {
       loadRepoFromDisk();
       String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
       newRepo.commit(message);
+      saveRepoToDisk();
+    }
+  }
+
+  private static void handleBranch(String[] args) throws IOException {
+    if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository doesn't exist.");
+    } else {
+      loadRepoFromDisk();
+      newRepo.branch(args[1]);
       saveRepoToDisk();
     }
   }

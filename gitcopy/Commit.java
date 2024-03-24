@@ -44,6 +44,7 @@ public class Commit implements Serializable {
 
   }
 
+  /** Return sha1 of the commit instance. */
   public String getSHA1() {
     return this.commitSHA1;
   }

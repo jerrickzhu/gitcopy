@@ -109,16 +109,21 @@ public class Repo implements Serializable {
         STATE_MACHINE.transitionState("commit", file);
         File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
         FileUtils.deleteFile(blobStagedFile);
-      } else {
-        System.out
-            .println("The file " + file + "is not in a staged state. Please stage it to continue with committing.");
       }
     }
     String lastCommitSHA1 = Head.getGlobalHeadCommitSHA1();
     Commit newCommit = new Commit(message, snapMap, lastCommitSHA1);
     newCommit.saveCommit();
 
-    // to do: move global head pointer
+    Branch currentBranch = FileUtils.loadObject(Branch.class, "HEAD", GITCOPY_DIRECTORY);
+    String currBranchName = currentBranch.getName();
+    Head.setGlobalHead(currBranchName, newCommit);
+    Head.setBranchHead(currBranchName, newCommit);
+  }
+
+  public void branch(String branchName) throws IOException {
+    Commit lastCommit = Head.getGlobalHeadCommit();
+    Head.setBranchHead(branchName, lastCommit);
   }
 
   private void createFoldersForInit() {

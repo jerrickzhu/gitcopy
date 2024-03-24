@@ -80,7 +80,6 @@ public class GitCopyStateMachine implements Serializable {
 
     if (input == "init") {
       if (currState == GitCopyStates.UNINITIALIZED) {
-        // This line updates the REPO key to initialized state.
         updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED, false);
       } else {
         throw new IllegalArgumentException(
