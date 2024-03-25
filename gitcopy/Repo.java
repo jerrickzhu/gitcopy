@@ -9,13 +9,14 @@ import java.util.Map;
 public class Repo implements Serializable {
 
   private GitCopyStateMachine STATE_MACHINE;
+  private Map<String, GitCopyStateMachine> BRANCH_STATE_MACHINES;
+  private String CURRENT_BRANCH;
   private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
   private final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   private Map<String, Blob> fileBlobMap;
   private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
-  private final String COMMIT_DIRECOTRY = GITCOPY_DIRECTORY + File.separator + ".commits";
 
   public Repo() {
     // Initialization of a GitCopyStateMachine also creates the first entry

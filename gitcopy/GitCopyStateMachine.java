@@ -2,11 +2,8 @@ package gitcopy;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
 
-public class GitCopyStateMachine implements Serializable {
-  private Map<String, GitCopyStates> currentStates;
+public class GitCopyStateMachine extends StateMachine implements Serializable {
 
   /**
    * Initialize the state machine. Data contained in hashmap
@@ -15,57 +12,7 @@ public class GitCopyStateMachine implements Serializable {
    * It starts as an uninitialized state and transitions later on.
    */
   public GitCopyStateMachine() {
-    this.currentStates = new HashMap<>();
-    GitCopyStates repoState = GitCopyStates.UNINITIALIZED;
-    this.currentStates.put("REPO", repoState);
-  }
-
-  /**
-   * Retrieves the state of a file.
-   * 
-   * @param filename
-   * @return GitCopyStates, the state of the file.
-   */
-  public GitCopyStates getCurrentStateOfFile(String filename) {
-    return this.currentStates.get(filename);
-  }
-
-  /** Get files in state machine. */
-  public Map<String, GitCopyStates> getFiles() {
-    return this.currentStates;
-  }
-
-  /**
-   * Checks if the file is tracked.
-   * 
-   * @param filename
-   * @return returns true or false if file is tracked
-   */
-  public boolean fileInStateMachine(String filename) {
-    return this.currentStates.containsKey(filename);
-  }
-
-  /**
-   * Add new files or update files that are tracked in state machine.
-   * 
-   * @param filename
-   * @param state    - The State you need to add in for this file
-   */
-  public void updateFileAndStateToMachine(String filename, GitCopyStates state, boolean isDelete) {
-    if (!isDelete) {
-      this.currentStates.put(filename, state);
-    } else {
-      if (fileInStateMachine(filename)) {
-        removeFile(filename);
-      }
-    }
-  }
-
-  /** Removes file from the hashmap in state machine. */
-  private void removeFile(String filename) {
-    if (fileInStateMachine(filename)) {
-      this.currentStates.remove(filename);
-    }
+    super();
   }
 
   /**
