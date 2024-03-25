@@ -25,14 +25,7 @@ public class GitCopyStateMachine extends StateMachine implements Serializable {
   public void transitionState(String input, String filename) throws IOException {
     GitCopyStates currState = getCurrentStateOfFile(filename);
 
-    if (input == "init") {
-      if (currState == GitCopyStates.UNINITIALIZED) {
-        updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED, false);
-      } else {
-        throw new IllegalArgumentException(
-            "The repository must be in an uninitialized state if you use the init command.");
-      }
-    } else if (input == "add") {
+    if (input == "add") {
       if (currState == GitCopyStates.UNSTAGED || currState == GitCopyStates.COMMITTED) {
         updateFileAndStateToMachine(filename, GitCopyStates.STAGED, false);
       } else {

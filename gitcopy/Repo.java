@@ -8,21 +8,25 @@ import java.util.Map;
 
 public class Repo implements Serializable {
 
-  private GitCopyStateMachine STATE_MACHINE;
+  private RepoStateMachine REPO_STATE_MACHINE;
   private Map<String, GitCopyStateMachine> BRANCH_STATE_MACHINES;
   private String CURRENT_BRANCH;
   private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
   private final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
-  private Map<String, Blob> fileBlobMap;
+  private Map<String, Map<String, Blob>> branchesFileBlobMap;
   private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
 
   public Repo() {
     // Initialization of a GitCopyStateMachine also creates the first entry
     // in its hashmap attribute with key "REPO" with a val of UninitializedState
-    STATE_MACHINE = new GitCopyStateMachine();
-    fileBlobMap = new HashMap<>();
+    REPO_STATE_MACHINE = new RepoStateMachine();
+    BRANCH_STATE_MACHINES = new HashMap<>();
+    BRANCH_STATE_MACHINES.put("master", new GitCopyStateMachine());
+    branchesFileBlobMap = new HashMap<>();
+    branchesFileBlobMap.put("master", new HashMap<>());
+    CURRENT_BRANCH = "master";
   }
 
   public void initializeRepo() throws IOException {
@@ -30,7 +34,7 @@ public class Repo implements Serializable {
     // Since we already have a REPO key, we can now transition its state to
     // InitializedState via transitionState
 
-    STATE_MACHINE.transitionState("init", "REPO");
+    REPO_STATE_MACHINE.transitionState("init", "REPO");
 
     // Create hidden folders to store files in
     createFoldersForInit();
@@ -47,43 +51,47 @@ public class Repo implements Serializable {
 
   public void add(String[] files) throws IOException {
     for (String file : files) {
-      if (fileBlobMap != null && fileBlobMap.containsKey(file)) {
+      Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
+      if (currBranchFileBlobMap != null && currBranchFileBlobMap.containsKey(file)) {
         // check if file with same content already exists in staging area. SHA1 should
         // be equal if so
-        String blobSHA1OfFile = fileBlobMap.get(file).getBlobSHA1();
+        String blobSHA1OfFile = currBranchFileBlobMap.get(file).getBlobSHA1();
         File stagedFilePath = FileUtils.createFileInCurrentDirectory(STAGED_DIRECTORY, blobSHA1OfFile);
         if (stagedFilePath.exists()) {
           continue;
         }
       }
-      STATE_MACHINE.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED, false);
+      GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
+      currBranchStateMachine.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED, false);
 
       // transition state to staged
-      STATE_MACHINE.transitionState("add", file);
+      currBranchStateMachine.transitionState("add", file);
 
       // Convert the file into a blob with its contents and a SHA1
       Blob blob = new Blob(file);
-      fileBlobMap.put(file, blob);
+      currBranchFileBlobMap.put(file, blob);
 
       stageFile(file, blob);
     }
   }
 
   public void remove(String[] files) throws IOException {
+    GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
+    Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
     for (String file : files) {
-      if (STATE_MACHINE.fileInStateMachine(file)) {
-        GitCopyStates fileState = STATE_MACHINE.getCurrentStateOfFile(file);
+      if (currBranchStateMachine.fileInStateMachine(file)) {
+        GitCopyStates fileState = currBranchStateMachine.getCurrentStateOfFile(file);
         if (fileState == GitCopyStates.STAGED) {
 
           // to do: refactor later to break into better encapsulated functions
 
-          String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
-          fileBlobMap.remove(file);
+          String blobSHA1 = currBranchFileBlobMap.get(file).getBlobSHA1();
+          currBranchFileBlobMap.remove(file);
           File blobDirectoryFile = new File(BLOB_DIRECTORY + File.separator + blobSHA1);
           File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
           FileUtils.deleteFile(blobDirectoryFile);
           FileUtils.deleteFile(blobStagedFile);
-          STATE_MACHINE.transitionState("rm", file);
+          currBranchStateMachine.transitionState("rm", file);
 
         } else {
           System.out.println("Can't remove this file. Must be staged.");
@@ -96,7 +104,9 @@ public class Repo implements Serializable {
 
   public void commit(String message) throws IOException {
     Map<String, String> snapMap = new HashMap<>();
-    Map<String, GitCopyStates> files = STATE_MACHINE.getFiles();
+    GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
+    Map<String, GitCopyStates> files = currBranchStateMachine.getFiles();
+    Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
 
     for (Map.Entry<String, GitCopyStates> entry : files.entrySet()) {
       String file = entry.getKey();
@@ -105,9 +115,9 @@ public class Repo implements Serializable {
         continue;
       }
       if (state == GitCopyStates.STAGED) {
-        String blobSHA1 = fileBlobMap.get(file).getBlobSHA1();
+        String blobSHA1 = currBranchFileBlobMap.get(file).getBlobSHA1();
         snapMap.put(file, blobSHA1);
-        STATE_MACHINE.transitionState("commit", file);
+        currBranchStateMachine.transitionState("commit", file);
         File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
         FileUtils.deleteFile(blobStagedFile);
       }
