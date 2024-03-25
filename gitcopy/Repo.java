@@ -19,14 +19,12 @@ public class Repo implements Serializable {
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
 
   public Repo() {
-    // Initialization of a GitCopyStateMachine also creates the first entry
-    // in its hashmap attribute with key "REPO" with a val of UninitializedState
     REPO_STATE_MACHINE = new RepoStateMachine();
     BRANCH_STATE_MACHINES = new HashMap<>();
-    BRANCH_STATE_MACHINES.put("master", new GitCopyStateMachine());
-    branchesFileBlobMap = new HashMap<>();
-    branchesFileBlobMap.put("master", new HashMap<>());
     CURRENT_BRANCH = "master";
+    addMasterBranchToStateMachine();
+    branchesFileBlobMap = new HashMap<>();
+    addMasterBranchToFileBlobMap();
   }
 
   public void initializeRepo() throws IOException {
@@ -135,6 +133,54 @@ public class Repo implements Serializable {
   public void branch(String branchName) throws IOException {
     Commit lastCommit = Head.getGlobalHeadCommit();
     Head.setBranchHead(branchName, lastCommit);
+    addBranchToStateMachine(branchName);
+    addBranchToFileBlobMap(branchName);
+  }
+
+  /** Checks out to another branch. */
+  public void checkoutBranch(String branchName) throws IOException {
+    CURRENT_BRANCH = branchName;
+    Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
+    Head.setGlobalHead(branchName, branchHeadCommit);
+    return;
+  }
+
+  /** Checks out to a commit. */
+  public void checkoutCommit() throws IOException {
+    // to do: finish logs and then finish checkoutCommit.
+    return;
+  }
+
+  /**
+   * Inputs a new branch and a copy of the current branches state machine into
+   * BRANCH_STATE_MACHINES.
+   * 
+   * @param branchName - the new branch name we created, which serves as the key
+   */
+  private void addBranchToStateMachine(String branchName) {
+    BRANCH_STATE_MACHINES.put(branchName, BRANCH_STATE_MACHINES.get(CURRENT_BRANCH));
+  }
+
+  /**
+   * Adds a master key into the BRANCH_STATE_MACHINES and instantiates
+   * a new GitCopyStateMachine for the master branch.
+   */
+  private void addMasterBranchToStateMachine() {
+    BRANCH_STATE_MACHINES.put("master", new GitCopyStateMachine());
+  }
+
+  /** Adds the master branch into the branchesFileBlobMap. */
+  private void addMasterBranchToFileBlobMap() {
+    branchesFileBlobMap.put("master", new HashMap<>());
+  }
+
+  /**
+   * Adds the newest branch made to the branchFileBlobMap. Inputs the
+   * branchName as the new key, as well as a copy of the HashMap
+   * from the current branch into the new branchName key.
+   */
+  private void addBranchToFileBlobMap(String branchName) {
+    branchesFileBlobMap.put(branchName, branchesFileBlobMap.get(CURRENT_BRANCH));
   }
 
   private void createFoldersForInit() {

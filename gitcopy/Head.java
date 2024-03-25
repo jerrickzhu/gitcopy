@@ -7,6 +7,7 @@ public class Head {
 
   private static String GITCOPY_FOLDER = FileUtils.findGitCopyRootDirectory().getAbsolutePath() + File.separator
       + ".gitcopy";
+  private static String BRANCHES_FOLDER = GITCOPY_FOLDER + File.separator + ".branches";
 
   public static void setGlobalHead(String branchName, Commit commit) throws IOException {
     Branch branch = new Branch(branchName, commit);
@@ -26,6 +27,11 @@ public class Head {
 
   public static Commit getGlobalHeadCommit() {
     Branch branch = FileUtils.loadObject(Branch.class, "HEAD", GITCOPY_FOLDER);
+    return branch.getHead();
+  }
+
+  public static Commit getBranchHeadCommit(String branchName) {
+    Branch branch = FileUtils.loadObject(Branch.class, branchName, BRANCHES_FOLDER);
     return branch.getHead();
   }
 

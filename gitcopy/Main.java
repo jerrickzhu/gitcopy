@@ -34,6 +34,7 @@ public class Main {
           handleBranch(args);
           break;
         case "checkout":
+          handleCheckoutBranch(args);
           break;
         case "log":
 
@@ -118,6 +119,16 @@ public class Main {
     } else {
       loadRepoFromDisk();
       newRepo.branch(args[1]);
+      saveRepoToDisk();
+    }
+  }
+
+  private static void handleCheckoutBranch(String[] args) throws IOException {
+    if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository doesn't exist.");
+    } else {
+      loadRepoFromDisk();
+      newRepo.checkoutBranch(args[1]);
       saveRepoToDisk();
     }
   }
