@@ -21,32 +21,33 @@ public class Main {
       String command = args[0];
       if (command.equals("init")) {
         handleInit();
-        return;
       } else if (!FileUtils.validateGitCopyExists()) {
         System.out.println("A repository does not exist here.");
         return;
-      }
-      loadRepoFromDisk();
-      switch (command) {
-        case "add":
-          handleAdd(args);
-          break;
-        case "rm":
-          handleRemove(args);
-          break;
-        case "commit":
-          handleCommit(args);
-          break;
-        case "branch":
-          handleBranch(args);
-          break;
-        case "checkout":
-          determineCheckout(args);
-          break;
-        case "log":
-          break;
+      } else {
+        loadRepoFromDisk();
+        switch (command) {
+          case "add":
+            handleAdd(args);
+            break;
+          case "rm":
+            handleRemove(args);
+            break;
+          case "commit":
+            handleCommit(args);
+            break;
+          case "branch":
+            handleBranch(args);
+            break;
+          case "checkout":
+            determineCheckout(args);
+            break;
+          case "log":
+            break;
+        }
       }
       saveRepoToDisk();
+
     }
   }
 
