@@ -3,6 +3,8 @@ package gitcopy;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
 
@@ -17,10 +19,15 @@ public class Main {
       System.exit(0);
     } else {
       String command = args[0];
+      if (command.equals("init")) {
+        handleInit();
+        return;
+      } else if (!FileUtils.validateGitCopyExists()) {
+        System.out.println("A repository does not exist here.");
+        return;
+      }
+      loadRepoFromDisk();
       switch (command) {
-        case "init":
-          handleInit();
-          break;
         case "add":
           handleAdd(args);
           break;
@@ -34,11 +41,12 @@ public class Main {
           handleBranch(args);
           break;
         case "checkout":
-          handleCheckoutBranch(args);
+          determineCheckout(args);
           break;
         case "log":
-
+          break;
       }
+      saveRepoToDisk();
     }
   }
 
@@ -67,70 +75,56 @@ public class Main {
   }
 
   private static void handleInit() throws IOException {
-    if (FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository already is initialized in this directory");
-    } else {
-      newRepo = new Repo();
-      newRepo.initializeRepo();
-      saveRepoToDisk();
-    }
+    newRepo = new Repo();
+    newRepo.initializeRepo();
   }
 
   private static void handleAdd(String[] args) throws IOException {
-    if (!FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository does not exist here, so you cannot add anything to stage.");
-    } else {
-      loadRepoFromDisk();
-      // Take the second argument. Will need to handle other strings thereafter.
-      String[] files = Arrays.copyOfRange(args, 1, args.length);
-      newRepo.add(files);
-      saveRepoToDisk();
-    }
+    // Take the second argument. Will need to handle other strings thereafter.
+    String[] files = Arrays.copyOfRange(args, 1, args.length);
+    newRepo.add(files);
   }
 
   private static void handleRemove(String[] args) throws IOException {
-    if (!FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository doesn't exist, so we cannot remove anything.");
-    } else {
-      loadRepoFromDisk();
-      // Take the second argument. Will need to handle other strings thereafter, like
-      // *.
-      String[] files = Arrays.copyOfRange(args, 1, args.length);
-      newRepo.remove(files);
+    // Take the second argument. Will need to handle other strings thereafter, like
+    // *.
+    String[] files = Arrays.copyOfRange(args, 1, args.length);
+    newRepo.remove(files);
 
-      saveRepoToDisk();
-    }
   }
 
   private static void handleCommit(String[] args) throws IOException {
-    if (!FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository doesn't exist. Cannot commit anything.");
-    } else {
-      loadRepoFromDisk();
-      String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-      newRepo.commit(message);
-      saveRepoToDisk();
-    }
+    String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+    newRepo.commit(message);
   }
 
   private static void handleBranch(String[] args) throws IOException {
-    if (!FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository doesn't exist.");
-    } else {
-      loadRepoFromDisk();
-      newRepo.branch(args[1]);
-      saveRepoToDisk();
-    }
+    newRepo.branch(args[1]);
   }
 
   private static void handleCheckoutBranch(String[] args) throws IOException {
-    if (!FileUtils.validateGitCopyExists()) {
-      System.out.println("A repository doesn't exist.");
+    newRepo.checkoutBranch(args[1]);
+  }
+
+  private static void handleCheckoutCommit(String[] args) throws IOException {
+    return;
+  }
+
+  private static void determineCheckout(String[] args) throws IOException {
+    String commitHashOrBranch = args[1];
+    if (isSHA1(commitHashOrBranch)) {
+      handleCheckoutCommit(args);
     } else {
-      loadRepoFromDisk();
-      newRepo.checkoutBranch(args[1]);
-      saveRepoToDisk();
+      handleCheckoutBranch(args);
     }
+  }
+
+  /** Checks if the input given is a SHA1 */
+  private static boolean isSHA1(String input) {
+    String sha1Regex = "[0-9a-fA-F]{40}";
+    Pattern pattern = Pattern.compile(sha1Regex);
+    Matcher matcher = pattern.matcher(input);
+    return matcher.matches();
   }
 
   private static void saveRepoToDisk() throws IOException {
