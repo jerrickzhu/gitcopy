@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.time.LocalDateTime;
 
@@ -23,13 +24,12 @@ public class Commit implements Serializable {
    * This constructor is only for initializations.
    * 
    */
-  public Commit(String message, Map<String, String> snapMap) {
+  public Commit(String message, String initialSHA1) {
     this.commitMessage = message;
-    this.snapshot = snapMap;
+    this.snapshot = new HashMap<>();
     this.time = LocalDateTime.now().toString();
-    this.commitSHA1 = FileUtils.sha1(message);
-    this.commitParents.add(Repo.DEFAULT_SHA1);
-
+    this.commitSHA1 = initialSHA1;
+    this.commitParents.add(Repo.COMMIT_INIT_SHA1);
   }
 
   /**
@@ -50,19 +50,22 @@ public class Commit implements Serializable {
     return this.commitSHA1;
   }
 
+  public ArrayList<String> getParents() {
+    return this.commitParents;
+  }
+
+  public Map<String, String> getSnapshot() {
+    return this.snapshot;
+  }
+
   /**
    * SAVE METHODS: Encapsulating save methods to their distinct behaviors below.
    * 
    *
    */
 
-  public void saveCommit() {
-    try {
-      FileUtils.saveObjectToFileDisk(this.getSHA1(), COMMIT_DIRECTORY, this);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
+  public void saveCommit() throws IOException {
+    FileUtils.saveObjectToFileDisk(this.getSHA1(), COMMIT_DIRECTORY, this);
   }
 
 }

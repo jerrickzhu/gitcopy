@@ -17,38 +17,36 @@ public class Main {
     if (!isValid) {
       System.out.println("You've entered an incorrect command. Please try again.");
       System.exit(0);
-    } else {
-      String command = args[0];
-      if (command.equals("init")) {
-        handleInit();
-      } else if (!FileUtils.validateGitCopyExists()) {
-        System.out.println("A repository does not exist here.");
-        return;
-      } else {
-        loadRepoFromDisk();
-        switch (command) {
-          case "add":
-            handleAdd(args);
-            break;
-          case "rm":
-            handleRemove(args);
-            break;
-          case "commit":
-            handleCommit(args);
-            break;
-          case "branch":
-            handleBranch(args);
-            break;
-          case "checkout":
-            determineCheckout(args);
-            break;
-          case "log":
-            break;
-        }
-      }
-      saveRepoToDisk();
-
     }
+    String command = args[0];
+    if (command.equals("init")) {
+      handleInit();
+    } else if (!FileUtils.validateGitCopyExists()) {
+      System.out.println("A repository does not exist here.");
+      return;
+    } else {
+      loadRepoFromDisk();
+      switch (command) {
+        case "add":
+          handleAdd(args);
+          break;
+        case "rm":
+          handleRemove(args);
+          break;
+        case "commit":
+          handleCommit(args);
+          break;
+        case "branch":
+          handleBranch(args);
+          break;
+        case "checkout":
+          determineCheckout(args);
+          break;
+        case "log":
+          break;
+      }
+    }
+    saveRepoToDisk();
   }
 
   /**
@@ -108,7 +106,7 @@ public class Main {
   }
 
   private static void handleCheckoutCommit(String[] args) throws IOException {
-    return;
+    newRepo.checkoutCommit(args[1]);
   }
 
   private static void determineCheckout(String[] args) throws IOException {

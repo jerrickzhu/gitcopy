@@ -3,6 +3,7 @@ package gitcopy;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,9 +15,11 @@ public class Repo implements Serializable {
   private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
   private final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
+  static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
   private Map<String, Map<String, Blob>> branchesFileBlobMap;
   private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
+  private final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
 
   public Repo() {
     REPO_STATE_MACHINE = new RepoStateMachine();
@@ -29,8 +32,9 @@ public class Repo implements Serializable {
 
   public void initializeRepo() throws IOException {
 
-    // Since we already have a REPO key, we can now transition its state to
-    // InitializedState via transitionState
+    // Since we already have a REPO key from initialization
+    // we can now transition its state to
+    // INITIALIZED via transitionState
 
     REPO_STATE_MACHINE.transitionState("init", "REPO");
 
@@ -48,6 +52,9 @@ public class Repo implements Serializable {
   }
 
   public void add(String[] files) throws IOException {
+
+    // Prevent duplicates of files where blob SHA1s are the same. That would
+    // indicate the same file with no content changes
     for (String file : files) {
       Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
       if (currBranchFileBlobMap != null && currBranchFileBlobMap.containsKey(file)) {
@@ -69,6 +76,7 @@ public class Repo implements Serializable {
       Blob blob = new Blob(file);
       currBranchFileBlobMap.put(file, blob);
 
+      // Stages file via save files to disk
       stageFile(file, blob);
     }
   }
@@ -109,9 +117,6 @@ public class Repo implements Serializable {
     for (Map.Entry<String, GitCopyStates> entry : files.entrySet()) {
       String file = entry.getKey();
       GitCopyStates state = entry.getValue();
-      if (file.equals("REPO")) {
-        continue;
-      }
       if (state == GitCopyStates.STAGED) {
         String blobSHA1 = currBranchFileBlobMap.get(file).getBlobSHA1();
         snapMap.put(file, blobSHA1);
@@ -131,6 +136,8 @@ public class Repo implements Serializable {
   }
 
   public void branch(String branchName) throws IOException {
+    // Grab last global head commit and make it so the branch created
+    // has that commit as its first commit pointer
     Commit lastCommit = Head.getGlobalHeadCommit();
     Head.setBranchHead(branchName, lastCommit);
     addBranchToStateMachine(branchName);
@@ -142,13 +149,50 @@ public class Repo implements Serializable {
     CURRENT_BRANCH = branchName;
     Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
     Head.setGlobalHead(branchName, branchHeadCommit);
-    return;
   }
 
   /** Checks out to a commit. */
-  public void checkoutCommit() throws IOException {
-    // to do: finish logs and then finish checkoutCommit.
-    return;
+  public void checkoutCommit(String commitHash) throws IOException {
+    // Get the latest head commit pointer, then recursively find the commit hash
+    // and its corresponding commit instance.
+    Commit lastCommit = Head.getGlobalHeadCommit();
+    Commit foundCommit = findCommit(commitHash, lastCommit);
+    if (foundCommit == null) {
+      System.out.println("Couldn't find the commit hash");
+      return;
+    }
+    // After finding the commit instance, iterate through the snapshot
+    // and restore all files from that commit.
+    Map<String, String> commitSnapShot = foundCommit.getSnapshot();
+    for (Map.Entry<String, String> snapshotEntry : commitSnapShot.entrySet()) {
+      String fileName = snapshotEntry.getKey();
+      String blobSHA1 = snapshotEntry.getValue();
+      Blob loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
+      File file = new File(fileName);
+      FileUtils.writeContentsToFile(file, loadedBlob.getFileContent());
+    }
+
+    // to do: figure out repointing the global head to be at the commit we are now
+    // at and how we deal with detached states.
+
+  }
+
+  /** Recursive function to find the commit hash in commit parents. */
+  private Commit findCommit(String commitHash, Commit lastCommit) {
+    if (lastCommit.getSHA1().equals(COMMIT_INIT_SHA1)) {
+      return null;
+    }
+    if (lastCommit.getSHA1().equals(commitHash)) {
+      return lastCommit;
+    }
+    for (String commitParentSHA1 : lastCommit.getParents()) {
+      Commit commitFromParentSHA1 = FileUtils.loadObject(Commit.class, commitParentSHA1, COMMIT_DIRECTORY);
+      Commit result = findCommit(commitHash, commitFromParentSHA1);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 
   /**
@@ -183,6 +227,7 @@ public class Repo implements Serializable {
     branchesFileBlobMap.put(branchName, branchesFileBlobMap.get(CURRENT_BRANCH));
   }
 
+  /** Creates hidden folders in the .gitcopy directory */
   private void createFoldersForInit() {
     String currentDirectory = System.getProperty("user.dir");
     File gitCopyFolder = new File(currentDirectory, ".gitcopy");
@@ -207,8 +252,8 @@ public class Repo implements Serializable {
     }
   }
 
-  private Commit makeInitialCommit() {
-    Commit initialCommit = new Commit("Initialization commit", new HashMap<>());
+  private Commit makeInitialCommit() throws IOException {
+    Commit initialCommit = new Commit("Initialization commit", COMMIT_INIT_SHA1);
     initialCommit.saveCommit();
     return initialCommit;
   }
