@@ -177,6 +177,43 @@ public class Repo implements Serializable {
 
   }
 
+  /**
+   * Finds the latest common ancestor commit to enable merging.
+   * 
+   * @param commits - An array list containing all the commits you intend to find
+   *                the LCA for.
+   * @return - *to do*
+   */
+  private ArrayList<Commit> findLatestCommonAncestor(ArrayList<Commit> commits) {
+    if (commits.size() <= 1) {
+      return commits;
+    }
+    ArrayList<Commit> appender = new ArrayList<>();
+    ArrayList<Commit> res = new ArrayList<>();
+
+    for (int index = 0; index < commits.size(); index++) {
+      int pairCount = 0;
+      int mover = index;
+      while (pairCount != 2 && mover < commits.size()) {
+        appender.add(commits.get(mover));
+        pairCount++;
+        mover++;
+      }
+      if (appender.size() > 1) {
+        Commit commonAncestorOfPair = findLatestCommonAncestorOfPair(appender.get(0), appender.get(1));
+        res.add(commonAncestorOfPair);
+      }
+      appender = new ArrayList<>();
+    }
+    return findLatestCommonAncestor(res);
+  }
+
+  private Commit findLatestCommonAncestorOfPair(Commit firstCommit, Commit secondCommit) {
+    // to do: fill out function to find LCA of pair
+    // place holder for now.
+    return new Commit(COMMIT_DIRECTORY, BLOB_DIRECTORY);
+  }
+
   /** Recursive function to find the commit hash in commit parents. */
   private Commit findCommit(String commitHash, Commit lastCommit) {
     if (lastCommit.getSHA1().equals(COMMIT_INIT_SHA1)) {
