@@ -176,6 +176,16 @@ public class Repo implements Serializable {
 
     // to do: figure out repointing the global head to be at the commit we are now
     // at and how we deal with detached states.
+  }
+
+  public void merge(String[] branches) throws IOException {
+
+    // ths function is incomplete
+    ArrayList<Commit> branchesCommits = new ArrayList<>();
+    for (String branch : branches) {
+      branchesCommits.add(Head.getBranchHeadCommit(branch));
+    }
+    findLatestCommonAncestor(branchesCommits);
 
   }
 
@@ -207,6 +217,7 @@ public class Repo implements Serializable {
         Commit secondCommit = appender.get(1);
         Commit commonAncestorOfPair = findLatestCommonAncestorOfPair(firstCommit, secondCommit, visited);
         res.add(commonAncestorOfPair);
+        System.out.println(res.get(0).getSHA1());
       }
       appender = new ArrayList<>();
     }
