@@ -181,11 +181,15 @@ public class Repo implements Serializable {
   public void merge(String[] branches) throws IOException {
 
     // ths function is incomplete
+
+    // branchesCommits is an array list that holds all of the branches' commits we
+    // need to merge
     ArrayList<Commit> branchesCommits = new ArrayList<>();
     for (String branch : branches) {
       branchesCommits.add(Head.getBranchHeadCommit(branch));
     }
-    findLatestCommonAncestor(branchesCommits);
+    ArrayList<Commit> latestCommonAncestor = findLatestCommonAncestor(branchesCommits);
+    // to do: finish merging
 
   }
 
@@ -200,57 +204,65 @@ public class Repo implements Serializable {
     if (commits.size() <= 1) {
       return commits;
     }
+    // appender holds Commits we need to find the LCA for. Max of 2 always.
     ArrayList<Commit> appender = new ArrayList<>();
     ArrayList<Commit> res = new ArrayList<>();
-
+    // Iterate through the entire array list of commits
     for (int index = 0; index < commits.size(); index++) {
       int pairCount = 0;
       int mover = index;
+      // We need to find the LCA of each pair, so this limits our appen
       while (pairCount != 2 && mover < commits.size()) {
         appender.add(commits.get(mover));
         pairCount++;
         mover++;
       }
+      // Once you have a pair in appender, we can go ahead and find its LCA.
+      // Append LCA result to the res arraylist.
       if (appender.size() > 1) {
-        Set<String> visited = new HashSet<>();
         Commit firstCommit = appender.get(0);
         Commit secondCommit = appender.get(1);
-        Commit commonAncestorOfPair = findLatestCommonAncestorOfPair(firstCommit, secondCommit, visited);
+        Commit commonAncestorOfPair = findLatestCommonAncestorOfPair(firstCommit, secondCommit);
         res.add(commonAncestorOfPair);
-        System.out.println(res.get(0).getSHA1());
+
       }
       appender = new ArrayList<>();
     }
+    // With the res array list, we recursively look for its LCA again.
     return findLatestCommonAncestor(res);
   }
 
-  private Commit findLatestCommonAncestorOfPair(Commit firstCommit, Commit secondCommit, Set<String> visited) {
-    if (firstCommit.getSHA1().equals(COMMIT_INIT_SHA1) || secondCommit.getSHA1().equals(COMMIT_INIT_SHA1)
-        || visited.contains(firstCommit.getSHA1()) || visited.contains(secondCommit.getSHA1())) {
-      return null;
-    }
-    if (firstCommit.equals(secondCommit)) {
-      return firstCommit;
-    }
-    visited.add(firstCommit.getSHA1());
-    visited.add(secondCommit.getSHA1());
+  /** Finds the LCA of the pair of commits */
+  private Commit findLatestCommonAncestorOfPair(Commit firstCommit, Commit secondCommit) {
 
-    for (String firstCommitParentSHA1 : firstCommit.getParents()) {
-      Commit commit = FileUtils.loadObject(Commit.class, firstCommitParentSHA1, COMMIT_DIRECTORY);
-      Commit result = findLatestCommonAncestorOfPair(commit, secondCommit, visited);
-      if (result != null) {
-        return result;
+    // Gather the ancestors of each commit
+    Set<String> ancestor1 = new HashSet<>();
+    findAncestors(firstCommit, ancestor1, new HashSet<>());
+    Set<String> ancestor2 = new HashSet<>();
+    findAncestors(secondCommit, ancestor2, new HashSet<>());
+
+    // Find the latest common ancestor by comparing ancestors
+    Commit latestAncestor = null;
+    for (String ancestor : ancestor1) {
+      if (ancestor2.contains(ancestor)) {
+        if (latestAncestor == null || ancestor.compareTo(latestAncestor.getSHA1()) > 0) {
+          latestAncestor = FileUtils.loadObject(Commit.class, ancestor, COMMIT_DIRECTORY);
+        }
       }
     }
+    return latestAncestor;
+  }
 
-    for (String secondCommitParentSHA1 : secondCommit.getParents()) {
-      Commit commit = FileUtils.loadObject(Commit.class, secondCommitParentSHA1, COMMIT_DIRECTORY);
-      Commit result = findLatestCommonAncestorOfPair(firstCommit, commit, visited);
-      if (result != null) {
-        return result;
-      }
+  private void findAncestors(Commit commit, Set<String> ancestors, Set<String> visited) {
+    if (commit.getSHA1().equals(COMMIT_INIT_SHA1) && visited.contains(COMMIT_INIT_SHA1)) {
+      return;
     }
-    return null;
+    visited.add(commit.getSHA1());
+    ancestors.add(commit.getSHA1());
+    for (String commitParent : commit.getParents()) {
+      Commit commitAncestor = FileUtils.loadObject(Commit.class, commitParent, COMMIT_DIRECTORY);
+      findAncestors(commitAncestor, ancestors, visited);
+    }
   }
 
   /** Recursive function to find the commit hash in commit parents. */

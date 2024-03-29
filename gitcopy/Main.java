@@ -43,6 +43,7 @@ public class Main {
           determineCheckout(args);
           break;
         case "merge":
+          handleMerge(args);
           break;
         case "log":
           break;
