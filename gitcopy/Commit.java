@@ -43,7 +43,6 @@ public class Commit implements Serializable {
     this.time = LocalDateTime.now().toString();
     this.commitSHA1 = FileUtils.sha1(snapMap + message);
     this.commitParents.add(parent);
-
   }
 
   /** Return sha1 of the commit instance. */

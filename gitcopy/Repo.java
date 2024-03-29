@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -198,7 +199,8 @@ public class Repo implements Serializable {
    * 
    * @param commits - An array list containing all the commits you intend to find
    *                the LCA for.
-   * @return - *to do*
+   * @return - ArrayList<Commit>, which should only contain one Commit object: the
+   *         LCA of all branch commits
    */
   private ArrayList<Commit> findLatestCommonAncestor(ArrayList<Commit> commits) {
     if (commits.size() <= 1) {
@@ -211,7 +213,8 @@ public class Repo implements Serializable {
     for (int index = 0; index < commits.size(); index++) {
       int pairCount = 0;
       int mover = index;
-      // We need to find the LCA of each pair, so this limits our appen
+      // We need to find the LCA of each pair, so this limits our appender size to
+      // stop at the pair
       while (pairCount != 2 && mover < commits.size()) {
         appender.add(commits.get(mover));
         pairCount++;
@@ -235,25 +238,40 @@ public class Repo implements Serializable {
   /** Finds the LCA of the pair of commits */
   private Commit findLatestCommonAncestorOfPair(Commit firstCommit, Commit secondCommit) {
 
-    // Gather the ancestors of each commit
-    Set<String> ancestor1 = new HashSet<>();
+    // Gather the ancestors of each commit. LinkedHashSet should provide a
+    // deterministic way to iterate through the ancestors in the order SHA1's are
+    // added to them.
+    Set<String> ancestor1 = new LinkedHashSet<>();
     findAncestors(firstCommit, ancestor1, new HashSet<>());
-    Set<String> ancestor2 = new HashSet<>();
+    Set<String> ancestor2 = new LinkedHashSet<>();
     findAncestors(secondCommit, ancestor2, new HashSet<>());
 
-    // Find the latest common ancestor by comparing ancestors
+    // Find the latest common ancestor by comparing ancestors. Iterate through
+    // ancestor1, the linked hashset. The first commit object found is the latest
+    // common ancestor.
     Commit latestAncestor = null;
     for (String ancestor : ancestor1) {
       if (ancestor2.contains(ancestor)) {
-        if (latestAncestor == null || ancestor.compareTo(latestAncestor.getSHA1()) > 0) {
-          latestAncestor = FileUtils.loadObject(Commit.class, ancestor, COMMIT_DIRECTORY);
-        }
+        latestAncestor = FileUtils.loadObject(Commit.class, ancestor, COMMIT_DIRECTORY);
+        break;
       }
     }
     return latestAncestor;
   }
 
+  /**
+   * Inputs SHA1 of commit ancestors by recursively going through parents of
+   * commits and adding their SHA1's to ancestor
+   * 
+   * @param commit    - The commit you want to find the ancestors of (parents,
+   *                  parents of parents, etc.)
+   * @param ancestors - A LinkedHashSet of all the ancestors SHA1s. Order of this
+   *                  set is maintained to preserve integrity of commit lineage
+   * @param visited   - A hashset to contain all visited parents.
+   */
   private void findAncestors(Commit commit, Set<String> ancestors, Set<String> visited) {
+    // Base case. If we have both the INIT SHA1 in visited and we are at the commit
+    // node, we may return
     if (commit.getSHA1().equals(COMMIT_INIT_SHA1) && visited.contains(COMMIT_INIT_SHA1)) {
       return;
     }
