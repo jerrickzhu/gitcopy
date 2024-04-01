@@ -15,14 +15,14 @@ public class Repo implements Serializable {
   private RepoStateMachine REPO_STATE_MACHINE;
   private Map<String, GitCopyStateMachine> BRANCH_STATE_MACHINES;
   private String CURRENT_BRANCH;
-  private final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
-  private final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
+  private static final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
+  private static final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
   private Map<String, Map<String, Blob>> branchesFileBlobMap;
   private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
-  private final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
+  public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
 
   public Repo() {
     REPO_STATE_MACHINE = new RepoStateMachine();
@@ -55,6 +55,9 @@ public class Repo implements Serializable {
   }
 
   public void add(String[] files) throws IOException {
+    if (!verifyRepoState()) {
+      return;
+    }
 
     // Prevent duplicates of files where blob SHA1s are the same. That would
     // indicate the same file with no content changes
@@ -189,98 +192,10 @@ public class Repo implements Serializable {
     for (String branch : branches) {
       branchesCommits.add(Head.getBranchHeadCommit(branch));
     }
-    ArrayList<Commit> latestCommonAncestor = findLatestCommonAncestor(branchesCommits);
-    // to do: finish merging
+    ArrayList<Commit> latestCommonAncestor = Merge.findLatestCommonAncestor(branchesCommits);
 
-  }
+    // to do: finish merging. think about state machine merges and states changing.
 
-  /**
-   * Finds the latest common ancestor commit to enable merging.
-   * 
-   * @param commits - An array list containing all the commits you intend to find
-   *                the LCA for.
-   * @return - ArrayList<Commit>, which should only contain one Commit object: the
-   *         LCA of all branch commits
-   */
-  private ArrayList<Commit> findLatestCommonAncestor(ArrayList<Commit> commits) {
-    if (commits.size() <= 1) {
-      return commits;
-    }
-    // appender holds Commits we need to find the LCA for. Max of 2 always.
-    ArrayList<Commit> appender = new ArrayList<>();
-    ArrayList<Commit> res = new ArrayList<>();
-    // Iterate through the entire array list of commits
-    for (int index = 0; index < commits.size(); index++) {
-      int pairCount = 0;
-      int mover = index;
-      // We need to find the LCA of each pair, so this limits our appender size to
-      // stop at the pair
-      while (pairCount != 2 && mover < commits.size()) {
-        appender.add(commits.get(mover));
-        pairCount++;
-        mover++;
-      }
-      // Once you have a pair in appender, we can go ahead and find its LCA.
-      // Append LCA result to the res arraylist.
-      if (appender.size() > 1) {
-        Commit firstCommit = appender.get(0);
-        Commit secondCommit = appender.get(1);
-        Commit commonAncestorOfPair = findLatestCommonAncestorOfPair(firstCommit, secondCommit);
-        res.add(commonAncestorOfPair);
-
-      }
-      appender = new ArrayList<>();
-    }
-    // With the res array list, we recursively look for its LCA again.
-    return findLatestCommonAncestor(res);
-  }
-
-  /** Finds the LCA of the pair of commits */
-  private Commit findLatestCommonAncestorOfPair(Commit firstCommit, Commit secondCommit) {
-
-    // Gather the ancestors of each commit. LinkedHashSet should provide a
-    // deterministic way to iterate through the ancestors in the order SHA1's are
-    // added to them.
-    Set<String> ancestor1 = new LinkedHashSet<>();
-    findAncestors(firstCommit, ancestor1, new HashSet<>());
-    Set<String> ancestor2 = new LinkedHashSet<>();
-    findAncestors(secondCommit, ancestor2, new HashSet<>());
-
-    // Find the latest common ancestor by comparing ancestors. Iterate through
-    // ancestor1, the linked hashset. The first commit object found is the latest
-    // common ancestor.
-    Commit latestAncestor = null;
-    for (String ancestor : ancestor1) {
-      if (ancestor2.contains(ancestor)) {
-        latestAncestor = FileUtils.loadObject(Commit.class, ancestor, COMMIT_DIRECTORY);
-        break;
-      }
-    }
-    return latestAncestor;
-  }
-
-  /**
-   * Inputs SHA1 of commit ancestors by recursively going through parents of
-   * commits and adding their SHA1's to ancestor
-   * 
-   * @param commit    - The commit you want to find the ancestors of (parents,
-   *                  parents of parents, etc.)
-   * @param ancestors - A LinkedHashSet of all the ancestors SHA1s. Order of this
-   *                  set is maintained to preserve integrity of commit lineage
-   * @param visited   - A hashset to contain all visited parents.
-   */
-  private void findAncestors(Commit commit, Set<String> ancestors, Set<String> visited) {
-    // Base case. If we have both the INIT SHA1 in visited and we are at the commit
-    // node, we may return
-    if (commit.getSHA1().equals(COMMIT_INIT_SHA1) && visited.contains(COMMIT_INIT_SHA1)) {
-      return;
-    }
-    visited.add(commit.getSHA1());
-    ancestors.add(commit.getSHA1());
-    for (String commitParent : commit.getParents()) {
-      Commit commitAncestor = FileUtils.loadObject(Commit.class, commitParent, COMMIT_DIRECTORY);
-      findAncestors(commitAncestor, ancestors, visited);
-    }
   }
 
   /** Recursive function to find the commit hash in commit parents. */
@@ -356,6 +271,10 @@ public class Repo implements Serializable {
         System.err.println("Failed to create folder " + folder.getName());
       }
     }
+  }
+
+  private boolean verifyRepoState() {
+    return REPO_STATE_MACHINE.getCurrentStateOfFile("REPO").equals(GitCopyStates.INITIALIZED);
   }
 
   private Commit makeInitialCommit() throws IOException {
