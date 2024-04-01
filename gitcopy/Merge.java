@@ -25,13 +25,13 @@ public class Merge {
     // Iterate through the entire array list of commits
     for (int index = 0; index < commits.size(); index++) {
       int pairCount = 0;
-      int mover = index;
+      int indexMover = index;
       // We need to find the LCA of each pair, so this limits our appender size to
       // stop at the pair
-      while (pairCount != 2 && mover < commits.size()) {
-        appender.add(commits.get(mover));
+      while (pairCount != 2 && indexMover < commits.size()) {
+        appender.add(commits.get(indexMover));
         pairCount++;
-        mover++;
+        indexMover++;
       }
       // Once you have a pair in appender, we can go ahead and find its LCA.
       // Append LCA result to the res arraylist.
