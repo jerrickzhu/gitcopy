@@ -186,16 +186,30 @@ public class Repo implements Serializable {
 
     // ths function is incomplete
 
+    Commit LCA = getLCACommit(branches);
+
+    // to do: finish merging. think about state machine merges and states changing.
+
+  }
+
+  /** Helper function to encapsulate getting LCA */
+  private Commit getLCACommit(String[] branches) {
     // branchesCommits is an array list that holds all of the branches' commits we
     // need to merge
     ArrayList<Commit> branchesCommits = new ArrayList<>();
     for (String branch : branches) {
       branchesCommits.add(Head.getBranchHeadCommit(branch));
     }
-    ArrayList<Commit> latestCommonAncestor = Merge.findLatestCommonAncestor(branchesCommits);
+    // Get common ancestor of all branches
+    ArrayList<Commit> branchesCommonAncestor = Merge.findLatestCommonAncestor(branchesCommits);
 
-    // to do: finish merging. think about state machine merges and states changing.
+    // Add the global head branch to branchesCommonAncestor to find the final LCA
+    branchesCommonAncestor.add(Head.getGlobalHeadCommit());
 
+    // Find the final LCA between master and the other LCA of the branches from
+    // branchesCommonAncestor and return the LCA commit
+    ArrayList<Commit> latestCommonAncestor = Merge.findLatestCommonAncestor(branchesCommonAncestor);
+    return latestCommonAncestor.get(0);
   }
 
   /** Recursive function to find the commit hash in commit parents. */
