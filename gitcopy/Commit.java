@@ -36,12 +36,14 @@ public class Commit implements Serializable {
    * This constructor is for anything EXCEPT for initializations.
    * 
    */
-  public Commit(String message, Map<String, String> snapMap, String parent) {
+  public Commit(String message, Map<String, String> snapMap, String... parents) {
     this.commitMessage = message;
     this.snapshot = snapMap;
     this.time = LocalDateTime.now().toString();
     this.commitSHA1 = FileUtils.sha1(snapMap + message);
-    this.commitParents.add(parent);
+    for (String parent : parents) {
+      this.commitParents.add(parent);
+    }
   }
 
   /** Return sha1 of the commit instance. */
