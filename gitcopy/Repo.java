@@ -189,25 +189,17 @@ public class Repo implements Serializable {
 
     // IN PROGRESS: compare differences of LCA to head commits of branches
 
-    // Put all of the branch head commits in an array list
-    Map<String, Commit> branchCommits = new HashMap<>();
-    for (String branchName : branches) {
-      branchCommits.put(branchName, Head.getBranchHeadCommit(branchName));
-    }
-
     // Iterate through branchCommits and compare LCA to each.
     Map<String, String> LCASnapShot = LCA.getSnapshot();
-
-    for (Map.Entry<String, Commit> entry : branchCommits.entrySet()) {
-      String branchName = entry.getKey();
-      Commit branchCommit = entry.getValue();
-      Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(branchName).getSnapshot();
+    Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(CURRENT_BRANCH).getSnapshot();
+    for (String branch : branches) {
+      Commit branchCommit = Head.getBranchHeadCommit(branch);
       Map<String, String> snapshot = branchCommit.getSnapshot();
       // to do: add in all possible conditions here
 
       // The given branch is modified, but the curr branch is not.
       Merge.givenBranchChangesCurrBranchSame(LCASnapShot, snapshot, currBranchSnapShot,
-          BRANCH_STATE_MACHINES.get(branchName), branchesFileBlobMap.get(branchName));
+          BRANCH_STATE_MACHINES.get(branch), branchesFileBlobMap.get(branch));
 
     }
 
