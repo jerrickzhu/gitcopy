@@ -35,4 +35,8 @@ public class Head {
     return branch.getHead();
   }
 
+  public static Branch getBranch(String branchName) {
+    return FileUtils.loadObject(Branch.class, branchName, BRANCHES_FOLDER);
+  }
+
 }
