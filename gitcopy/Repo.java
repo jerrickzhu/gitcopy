@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class Repo implements Serializable {
 
@@ -19,6 +16,8 @@ public class Repo implements Serializable {
   private static final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
+  // First key are branches, values are hashmaps of the file name (key) and blobs
+  // (values)
   private Map<String, Map<String, Blob>> branchesFileBlobMap;
   private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
@@ -187,6 +186,30 @@ public class Repo implements Serializable {
     // ths function is incomplete
 
     Commit LCA = getLCACommit(branches);
+
+    // IN PROGRESS: compare differences of LCA to head commits of branches
+
+    // Put all of the branch head commits in an array list
+    Map<String, Commit> branchCommits = new HashMap<>();
+    for (String branchName : branches) {
+      branchCommits.put(branchName, Head.getBranchHeadCommit(branchName));
+    }
+
+    // Iterate through branchCommits and compare LCA to each.
+    Map<String, String> LCASnapShot = LCA.getSnapshot();
+
+    for (Map.Entry<String, Commit> entry : branchCommits.entrySet()) {
+      String branchName = entry.getKey();
+      Commit branchCommit = entry.getValue();
+      Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(branchName).getSnapshot();
+      Map<String, String> snapshot = branchCommit.getSnapshot();
+      // to do: add in all possible conditions here
+
+      // The given branch is modified, but the curr branch is not.
+      Merge.givenBranchChangesCurrBranchSame(LCASnapShot, snapshot, currBranchSnapShot,
+          BRANCH_STATE_MACHINES.get(branchName), branchesFileBlobMap.get(branchName));
+
+    }
 
     // to do: finish merging. think about state machine merges and states changing.
 
