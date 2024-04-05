@@ -19,8 +19,8 @@ public class Repo implements Serializable {
   // First key are branches, values are hashmaps of the file name (key) and blobs
   // (values)
   private Map<String, Map<String, Blob>> branchesFileBlobMap;
-  private final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
-  private final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
+  public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
+  public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
 
   public Repo() {
@@ -71,6 +71,7 @@ public class Repo implements Serializable {
           continue;
         }
       }
+      // Don't need to check state since unstaged files don't exist yet
       GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
       currBranchStateMachine.updateFileAndStateToMachine(file, GitCopyStates.UNSTAGED, false);
 
@@ -192,18 +193,23 @@ public class Repo implements Serializable {
     // Iterate through branchCommits and compare LCA to each.
     Map<String, String> LCASnapShot = LCA.getSnapshot();
     Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(CURRENT_BRANCH).getSnapshot();
+    Map<String, String> mergeSnapShotMap = new HashMap<>();
     for (String branch : branches) {
       Commit branchCommit = Head.getBranchHeadCommit(branch);
       Map<String, String> snapshot = branchCommit.getSnapshot();
       // to do: add in all possible conditions here
 
       // The given branch is modified, but the curr branch is not.
-      Merge.givenBranchChangesCurrBranchSame(LCASnapShot, snapshot, currBranchSnapShot,
-          BRANCH_STATE_MACHINES.get(branch), branchesFileBlobMap.get(branch));
+      Merge.oneBranchChangesOnly(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap,
+          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), branchesFileBlobMap.get(CURRENT_BRANCH));
+
+      // The curr branch is modified, but the given branch is not.
+      Merge.oneBranchChangesOnly(LCASnapShot, currBranchSnapShot, snapshot, mergeSnapShotMap,
+          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), branchesFileBlobMap.get(CURRENT_BRANCH));
 
     }
 
-    // to do: finish merging. think about state machine merges and states changing.
+    // to do: at end of for loop above, save commit
 
   }
 
