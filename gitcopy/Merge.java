@@ -1,11 +1,88 @@
 package gitcopy;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class Merge {
+
+  public static void oneBranchChangesOnly(Map<String, String> LCASnapShot,
+      Map<String, String> givenBranchSnapShot, Map<String, String> currBranchSnapShot,
+      Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
+      throws IOException {
+
+    Map<String, String> notModifiedOnLCAOrCurr = new HashMap<>();
+    Map<String, String> modifiedOnGivenBranchAndLCA = new HashMap<>();
+
+    findUnmoddedFilesSinceLCA(LCASnapShot, currBranchSnapShot, notModifiedOnLCAOrCurr);
+    findModdedFilesSinceLCA(LCASnapShot, givenBranchSnapShot, modifiedOnGivenBranchAndLCA);
+    moddedGivenButUnchangedCurr(notModifiedOnLCAOrCurr, modifiedOnGivenBranchAndLCA, mergeSnapShot, stateMachine,
+        fileBlobs);
+
+  }
+
+  private static void moddedGivenButUnchangedCurr(Map<String, String> unmodded, Map<String, String> modded,
+      Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
+      throws IOException {
+    for (Map.Entry<String, String> unmoddedEntry : unmodded.entrySet()) {
+      String unmoddedFileName = unmoddedEntry.getKey();
+      for (Map.Entry<String, String> moddedEntry : modded.entrySet()) {
+        String moddedFileName = moddedEntry.getKey();
+        String moddedBlobSHA1 = moddedEntry.getValue();
+        // check if file hasn't been modded in curr branch but has been modded in given
+        // branch
+        if (unmoddedFileName.equals(moddedFileName)) {
+          // add into your mergeSnapShot so we know what to commit later
+          mergeSnapShot.put(moddedFileName, moddedBlobSHA1);
+          // change state machine. This should change the current branch state machine so
+          // we now have the proper states to commit later
+          stateMachine.updateFileAndStateToMachine(moddedFileName, GitCopyStates.UNSTAGED, false);
+          stateMachine.transitionState("add", moddedFileName);
+          fileBlobs.put(moddedFileName, FileUtils.loadObject(Blob.class, moddedBlobSHA1, Repo.BLOB_DIRECTORY));
+        }
+      }
+    }
+  }
+
+  /** Helper function to find files we do need to merge */
+  private static void findModdedFilesSinceLCA(Map<String, String> LCASnapShot,
+      Map<String, String> branchToCheck,
+      Map<String, String> map) throws IOException {
+    for (Map.Entry<String, String> LCAEntry : LCASnapShot.entrySet()) {
+      String LCAFileName = LCAEntry.getKey();
+      String LCABlobSHA1 = LCAEntry.getValue();
+      for (Map.Entry<String, String> entry : branchToCheck.entrySet()) {
+        String fileName = entry.getKey();
+        String blobSHA1 = entry.getValue();
+        if (LCAFileName.equals(fileName) && !LCABlobSHA1.equals(blobSHA1)) {
+          map.put(fileName, blobSHA1);
+        }
+      }
+    }
+
+  }
+
+  /** Helper function to find files we do not need to merge */
+  private static void findUnmoddedFilesSinceLCA(Map<String, String> LCASnapShot,
+      Map<String, String> branchToCheck,
+      Map<String, String> map) throws IOException {
+    for (Map.Entry<String, String> LCAEntry : LCASnapShot.entrySet()) {
+      String LCAFileName = LCAEntry.getKey();
+      String LCABlobSHA1 = LCAEntry.getValue();
+      for (Map.Entry<String, String> entry : branchToCheck.entrySet()) {
+        String fileName = entry.getKey();
+        String blobSHA1 = entry.getValue();
+        if (LCAFileName.equals(fileName) && LCABlobSHA1.equals(blobSHA1)) {
+          map.put(fileName, blobSHA1);
+        }
+      }
+    }
+  }
 
   /**
    * Finds the latest common ancestor commit to enable merging.
