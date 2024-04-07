@@ -31,7 +31,7 @@ public class Head {
   }
 
   public static Commit getBranchHeadCommit(String branchName) {
-    Branch branch = FileUtils.loadObject(Branch.class, branchName, BRANCHES_FOLDER);
+    Branch branch = getBranch(branchName);
     return branch.getHead();
   }
 
