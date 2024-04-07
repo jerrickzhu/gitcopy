@@ -145,6 +145,11 @@ public class Repo implements Serializable {
     // Grab last global head commit and make it so the branch created
     // has that commit as its first commit pointer
     Commit lastCommit = Head.getGlobalHeadCommit();
+    if (lastCommit.getSHA1().equals(COMMIT_INIT_SHA1)) {
+      System.out.println(
+          "Cannot create a new branch so long as the head points to initial commit. Please make a new commit first.");
+      return;
+    }
     Head.setBranchHead(branchName, lastCommit);
     addBranchToStateMachine(branchName);
     addBranchToFileBlobMap(branchName);
@@ -155,6 +160,9 @@ public class Repo implements Serializable {
     CURRENT_BRANCH = branchName;
     Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
     Head.setGlobalHead(branchName, branchHeadCommit);
+
+    // to do: reflect the files of the branch you are in via current working
+    // directory
   }
 
   /** Checks out to a commit. */
