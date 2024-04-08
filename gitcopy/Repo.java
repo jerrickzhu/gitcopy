@@ -161,8 +161,10 @@ public class Repo implements Serializable {
     Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
     Head.setGlobalHead(branchName, branchHeadCommit);
 
-    // to do: reflect the files of the branch you are in via current working
-    // directory
+    // Restore files in current working directory
+    Map<String, String> branchCommitSnapShot = branchHeadCommit.getSnapshot();
+    restoreCommit(branchCommitSnapShot);
+
   }
 
   /** Checks out to a commit. */
@@ -178,13 +180,7 @@ public class Repo implements Serializable {
     // After finding the commit instance, iterate through the snapshot
     // and restore all files from that commit.
     Map<String, String> commitSnapShot = foundCommit.getSnapshot();
-    for (Map.Entry<String, String> snapshotEntry : commitSnapShot.entrySet()) {
-      String fileName = snapshotEntry.getKey();
-      String blobSHA1 = snapshotEntry.getValue();
-      Blob loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
-      File file = new File(fileName);
-      FileUtils.writeContentsToFile(file, loadedBlob.getFileContent());
-    }
+    restoreCommit(commitSnapShot);
 
     // to do: figure out repointing the global head to be at the commit we are now
     // at and how we deal with detached states.
@@ -219,6 +215,16 @@ public class Repo implements Serializable {
 
     // to do: at end of for loop above, save commit
 
+  }
+
+  private void restoreCommit(Map<String, String> commitSnapShot) throws IOException {
+    for (Map.Entry<String, String> snapshotEntry : commitSnapShot.entrySet()) {
+      String fileName = snapshotEntry.getKey();
+      String blobSHA1 = snapshotEntry.getValue();
+      Blob loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
+      File file = new File(fileName);
+      FileUtils.writeContentsToFile(file, loadedBlob.getFileContent());
+    }
   }
 
   /** Helper function to encapsulate getting LCA */
