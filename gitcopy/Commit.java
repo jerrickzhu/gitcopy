@@ -59,6 +59,10 @@ public class Commit implements Serializable {
     return this.snapshot;
   }
 
+  public String getMessage() {
+    return this.commitMessage;
+  }
+
   /**
    * SAVE METHODS: Encapsulating save methods to their distinct behaviors below.
    * 
