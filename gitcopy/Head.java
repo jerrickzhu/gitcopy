@@ -16,8 +16,7 @@ public class Head {
 
   public static void setBranchHead(String branchName, Commit commit) throws IOException {
     Branch branch = new Branch(branchName, commit);
-    String branchFolderPath = GITCOPY_FOLDER + File.separator + ".branches";
-    FileUtils.saveObjectToFileDisk(branchName, branchFolderPath, branch);
+    FileUtils.saveObjectToFileDisk(branchName, BRANCHES_FOLDER, branch);
   }
 
   public static String getGlobalHeadCommitSHA1() {
