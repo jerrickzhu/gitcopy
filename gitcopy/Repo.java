@@ -192,8 +192,6 @@ public class Repo implements Serializable {
 
     Commit LCA = getLCACommit(branches);
 
-    // IN PROGRESS: compare differences of LCA to head commits of branches
-
     // Iterate through branchCommits and compare LCA to each.
     Map<String, String> LCASnapShot = LCA.getSnapshot();
     Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(CURRENT_BRANCH).getSnapshot();
@@ -239,9 +237,7 @@ public class Repo implements Serializable {
   private void traverseCommitHistory(Commit commit) {
     System.out.println();
     System.out.println("Commit hash: " + commit.getSHA1());
-    System.out.println();
     System.out.println("Commit message: " + commit.getMessage());
-    System.out.println();
     System.out.println("Commit Date: " + commit.getTime());
 
     ArrayList<String> parents = commit.getParents();

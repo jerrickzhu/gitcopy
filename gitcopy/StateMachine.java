@@ -11,10 +11,6 @@ public abstract class StateMachine implements Serializable {
     this.currentStates = new HashMap<>();
   }
 
-  protected void initializeRepo() {
-    this.currentStates.put("REPO", GitCopyStates.UNINITIALIZED);
-  }
-
   /**
    * Add new files or update files that are tracked in state machine.
    * 

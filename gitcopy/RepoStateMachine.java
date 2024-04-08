@@ -9,6 +9,10 @@ public class RepoStateMachine extends StateMachine {
     initializeRepo();
   }
 
+  private void initializeRepo() {
+    this.currentStates.put("REPO", GitCopyStates.UNINITIALIZED);
+  }
+
   /**
    * Transitions state depending on the input given and the current state.
    * 
