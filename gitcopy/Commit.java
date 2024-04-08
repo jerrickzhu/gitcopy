@@ -63,6 +63,10 @@ public class Commit implements Serializable {
     return this.commitMessage;
   }
 
+  public String getTime() {
+    return this.time;
+  }
+
   /**
    * SAVE METHODS: Encapsulating save methods to their distinct behaviors below.
    * 
