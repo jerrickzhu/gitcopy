@@ -99,7 +99,7 @@ public class Main {
   }
 
   private static void handleCommit(String[] args) throws IOException {
-    String message = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+    String message = args[1];
     newRepo.commit(message);
   }
 
