@@ -130,7 +130,12 @@ public class Main {
   }
 
   private static void handleLog(String[] args) throws IOException {
-    return;
+    // Determine if there's no arguments. If none, then give log of current branch.
+    if (args.length == 1) {
+      newRepo.log();
+    } else {
+      newRepo.log(args[1]);
+    }
   }
 
   /** Checks if the input given is a SHA1 */
