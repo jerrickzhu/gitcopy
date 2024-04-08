@@ -46,6 +46,7 @@ public class Main {
           handleMerge(args);
           break;
         case "log":
+          handleLog(args);
           break;
       }
     }
@@ -69,6 +70,7 @@ public class Main {
       case "branch":
       case "checkout":
       case "merge":
+      case "log":
         valid = true;
         break;
       default:
@@ -125,6 +127,10 @@ public class Main {
   private static void handleMerge(String[] args) throws IOException {
     String[] branches = Arrays.copyOfRange(args, 1, args.length);
     newRepo.merge(branches);
+  }
+
+  private static void handleLog(String[] args) throws IOException {
+    return;
   }
 
   /** Checks if the input given is a SHA1 */
