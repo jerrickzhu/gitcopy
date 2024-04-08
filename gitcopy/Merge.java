@@ -16,12 +16,12 @@ public class Merge {
       Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
       throws IOException {
 
-    Map<String, String> notModifiedOnLCAOrCurr = new HashMap<>();
-    Map<String, String> modifiedOnGivenBranchAndLCA = new HashMap<>();
+    Map<String, String> notModifiedMap = new HashMap<>();
+    Map<String, String> modifiedMap = new HashMap<>();
 
-    findUnmoddedFilesSinceLCA(LCASnapShot, currBranchSnapShot, notModifiedOnLCAOrCurr);
-    findModdedFilesSinceLCA(LCASnapShot, givenBranchSnapShot, modifiedOnGivenBranchAndLCA);
-    moddedGivenButUnchangedCurr(notModifiedOnLCAOrCurr, modifiedOnGivenBranchAndLCA, mergeSnapShot, stateMachine,
+    findUnmoddedFilesSinceLCA(LCASnapShot, currBranchSnapShot, notModifiedMap);
+    findModdedFilesSinceLCA(LCASnapShot, givenBranchSnapShot, modifiedMap);
+    moddedGivenButUnchangedCurr(notModifiedMap, modifiedMap, mergeSnapShot, stateMachine,
         fileBlobs);
 
   }
@@ -142,8 +142,7 @@ public class Merge {
     Commit latestAncestor = null;
     for (String ancestor : ancestor1) {
       if (ancestor2.contains(ancestor)) {
-        latestAncestor = FileUtils.loadObject(Commit.class, ancestor, Repo.COMMIT_DIRECTORY);
-        break;
+        return FileUtils.loadObject(Commit.class, ancestor, Repo.COMMIT_DIRECTORY);
       }
     }
     return latestAncestor;
