@@ -217,6 +217,44 @@ public class Repo implements Serializable {
 
   }
 
+  // Log commits for current branch. Used when no second argument is passed for
+  // log. e.g., java gitcopy.Main log
+  public void log() throws IOException {
+    Commit currBranchCommit = Head.getBranchHeadCommit(CURRENT_BRANCH);
+    traverseCommitHistory(currBranchCommit);
+
+  }
+
+  // Log commits for the specific branch.
+  // Command in terminal example: java gitcopy.Main log [insert branch name]
+  public void log(String branchName) throws IOException {
+    Commit branchCommit = Head.getBranchHeadCommit(branchName);
+    traverseCommitHistory(branchCommit);
+  }
+
+  /**
+   * Function to travel commit history and print out relevant information for
+   * logging.
+   */
+  private void traverseCommitHistory(Commit commit) {
+    System.out.println();
+    System.out.println("Commit hash: " + commit.getSHA1());
+    System.out.println();
+    System.out.println("Commit message: " + commit.getMessage());
+    System.out.println();
+    System.out.println("Commit Date: " + commit.getTime());
+
+    ArrayList<String> parents = commit.getParents();
+
+    for (String parentSHA1 : parents) {
+      Commit parentCommit = FileUtils.loadObject(Commit.class, parentSHA1, COMMIT_DIRECTORY);
+      if (!parentCommit.getSHA1().equals(COMMIT_INIT_SHA1)) {
+        traverseCommitHistory(parentCommit);
+      }
+    }
+    return;
+  }
+
   private void restoreCommit(Map<String, String> commitSnapShot) throws IOException {
     for (Map.Entry<String, String> snapshotEntry : commitSnapShot.entrySet()) {
       String fileName = snapshotEntry.getKey();
