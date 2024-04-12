@@ -11,6 +11,34 @@ import java.util.Set;
 
 public class Merge {
 
+  /**
+   * Function that checks conditions of if the given branch and curr branch have
+   * been modded.
+   * 1. Checks if modifications are the same. If so, take either commit.
+   * 2. Checks if the modifications are different. If so, conflict.
+   */
+  public static void isModdedGivenAndCurr(Map<String, String> LCASnapShot, Map<String, String> givenBranchSnapShot,
+      Map<String, String> currBranchSnapShot, Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine,
+      Map<String, Blob> fileBlobs) {
+    for (Map.Entry<String, String> entry : LCASnapShot.entrySet()) {
+      boolean fileInGivenBranch = givenBranchSnapShot.containsKey(entry.getKey());
+      boolean fileInCurrBranch = currBranchSnapShot.containsKey(entry.getKey());
+      String LCAFileBlob = LCASnapShot.get(entry.getKey());
+      String givenFileBlob = givenBranchSnapShot.get(entry.getKey());
+      String currFileBlob = currBranchSnapShot.get(entry.getKey());
+
+      // Checks the first condition in comments
+      if (fileInCurrBranch && fileInGivenBranch) {
+        if (currFileBlob.equals(givenFileBlob) && !currFileBlob.equals(LCAFileBlob)
+            && !givenFileBlob.equals(LCAFileBlob)) {
+          mergeSnapShot.put(entry.getKey(), currFileBlob);
+          // update state machine
+        }
+      }
+
+    }
+  }
+
   public static void oneBranchChangesOnly(Map<String, String> LCASnapShot,
       Map<String, String> givenBranchSnapShot, Map<String, String> currBranchSnapShot,
       Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
