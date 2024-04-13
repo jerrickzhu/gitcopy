@@ -22,6 +22,7 @@ public class Repo implements Serializable {
   public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
+  public static final String DELETED_BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".deleted_blobs";
 
   public Repo() {
     REPO_STATE_MACHINE = new RepoStateMachine();
@@ -92,25 +93,28 @@ public class Repo implements Serializable {
     Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
     for (String file : files) {
       if (currBranchStateMachine.fileInStateMachine(file)) {
-        GitCopyStates fileState = currBranchStateMachine.getCurrentStateOfFile(file);
-        if (fileState == GitCopyStates.STAGED) {
+        Blob blob = currBranchFileBlobMap.get(file);
+        String blobSHA1 = blob.getBlobSHA1();
+        currBranchFileBlobMap.remove(file);
+        File blobDirectoryFile = new File(BLOB_DIRECTORY + File.separator + blobSHA1);
+        File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
+        File fileCWD = new File(System.getProperty("user.dir") + File.separator + file);
+        deleteFiles(blobDirectoryFile, blobStagedFile, fileCWD);
+        // Transitions state then removes from state machine
+        currBranchStateMachine.transitionState("rm", file);
+        // Adds deleted blobs in deleted blob directory
+        FileUtils.saveObjectToFileDisk(blobSHA1, DELETED_BLOB_DIRECTORY, blob);
 
-          // to do: refactor later to break into better encapsulated functions
-
-          String blobSHA1 = currBranchFileBlobMap.get(file).getBlobSHA1();
-          currBranchFileBlobMap.remove(file);
-          File blobDirectoryFile = new File(BLOB_DIRECTORY + File.separator + blobSHA1);
-          File blobStagedFile = new File(STAGED_DIRECTORY + File.separator + blobSHA1);
-          FileUtils.deleteFile(blobDirectoryFile);
-          FileUtils.deleteFile(blobStagedFile);
-          currBranchStateMachine.transitionState("rm", file);
-
-        } else {
-          System.out.println("Can't remove this file. Must be staged.");
-        }
       } else {
-        System.out.println("This file does not exist in the repository.");
+        System.out.println("This file does not exist.");
       }
+    }
+  }
+
+  /** Helper function for remove method. Deletes files */
+  private void deleteFiles(File... files) {
+    for (File file : files) {
+      FileUtils.deleteFile(file);
     }
   }
 
@@ -195,6 +199,8 @@ public class Repo implements Serializable {
     // Iterate through branchCommits and compare LCA to each.
     Map<String, String> LCASnapShot = LCA.getSnapshot();
     Map<String, String> currBranchSnapShot = Head.getBranchHeadCommit(CURRENT_BRANCH).getSnapshot();
+    // The merge snapshot to commit with. Goes through each condition to add to this
+    // snapshot.
     Map<String, String> mergeSnapShotMap = new HashMap<>();
     for (String branch : branches) {
       Commit branchCommit = Head.getBranchHeadCommit(branch);
@@ -208,6 +214,9 @@ public class Repo implements Serializable {
       // The curr branch is modified, but the given branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, currBranchSnapShot, snapshot, mergeSnapShotMap,
           BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), branchesFileBlobMap.get(CURRENT_BRANCH));
+
+      // Both branches modified. Check if the changes are the same or if they are
+      // different.
 
     }
 
@@ -253,9 +262,14 @@ public class Repo implements Serializable {
 
   private void restoreCommit(Map<String, String> commitSnapShot) throws IOException {
     for (Map.Entry<String, String> snapshotEntry : commitSnapShot.entrySet()) {
+      Blob loadedBlob = null;
       String fileName = snapshotEntry.getKey();
       String blobSHA1 = snapshotEntry.getValue();
-      Blob loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
+      if ((new File(BLOB_DIRECTORY, blobSHA1)).exists()) {
+        loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
+      } else {
+        loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, DELETED_BLOB_DIRECTORY);
+      }
       File file = new File(fileName);
       FileUtils.writeContentsToFile(file, loadedBlob.getFileContent());
     }
@@ -344,7 +358,8 @@ public class Repo implements Serializable {
         new File(gitCopyDirectory, ".log"),
         new File(gitCopyDirectory, ".commits"),
         new File(gitCopyDirectory, ".blobs"),
-        new File(gitCopyDirectory, ".branches")
+        new File(gitCopyDirectory, ".branches"),
+        new File(gitCopyDirectory, ".deleted_blobs")
     };
 
     for (File folder : folders) {
