@@ -16,24 +16,28 @@ public class Merge {
    * been modded.
    * 1. Checks if modifications are the same. If so, take either commit.
    * 2. Checks if the modifications are different. If so, conflict.
+   * 
+   * @throws IOException
    */
   public static void isModdedGivenAndCurr(Map<String, String> LCASnapShot, Map<String, String> givenBranchSnapShot,
       Map<String, String> currBranchSnapShot, Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine,
-      Map<String, Blob> fileBlobs) {
+      Map<String, Blob> fileBlobs) throws IOException {
     for (Map.Entry<String, String> entry : LCASnapShot.entrySet()) {
       String LCAFileName = entry.getKey();
       boolean fileInGivenBranch = givenBranchSnapShot.containsKey(LCAFileName);
       boolean fileInCurrBranch = currBranchSnapShot.containsKey(LCAFileName);
-      String LCAFileBlob = entry.getValue();
-      String givenFileBlob = givenBranchSnapShot.get(LCAFileName);
-      String currFileBlob = currBranchSnapShot.get(LCAFileName);
+      String LCAFileBlobSHA1 = entry.getValue();
+      String givenFileBlobSHA1 = givenBranchSnapShot.get(LCAFileName);
+      String currFileBlobSHA1 = currBranchSnapShot.get(LCAFileName);
 
       // Checks the first condition in comments
       if (fileInCurrBranch && fileInGivenBranch) {
-        if (currFileBlob.equals(givenFileBlob) && !currFileBlob.equals(LCAFileBlob)
-            && !givenFileBlob.equals(LCAFileBlob)) {
-          mergeSnapShot.put(entry.getKey(), currFileBlob);
-          // update state machine
+        if (currFileBlobSHA1.equals(givenFileBlobSHA1) && !currFileBlobSHA1.equals(LCAFileBlobSHA1)
+            && !givenFileBlobSHA1.equals(LCAFileBlobSHA1)) {
+          mergeSnapShot.put(entry.getKey(), currFileBlobSHA1);
+          // update state machine and fileblobs map
+          stateMachine.transitionState("add", LCAFileName);
+          fileBlobs.put(LCAFileName, FileUtils.loadObject(Blob.class, givenFileBlobSHA1, Repo.BLOB_DIRECTORY));
         }
       }
 
