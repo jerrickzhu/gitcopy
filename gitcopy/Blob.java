@@ -2,9 +2,10 @@ package gitcopy;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.io.File;
 
-public class Blob implements Serializable {
+public class Blob implements Serializable, Cloneable {
   private String fileName;
   private byte[] fileContent;
   private String blobSHA1;
@@ -16,6 +17,17 @@ public class Blob implements Serializable {
     this.fileContent = FileUtils.convertFileToBytes(file);
     this.time = LocalDateTime.now().toString();
     this.blobSHA1 = FileUtils.sha1(this.fileContent);
+  }
+
+  @Override
+  public Blob clone() {
+    try {
+      Blob clone = (Blob) super.clone();
+      clone.fileContent = Arrays.copyOf(this.fileContent, this.fileContent.length);
+      return clone;
+    } catch (CloneNotSupportedException excp) {
+      throw new AssertionError();
+    }
   }
 
   public String getBlobSHA1() {
