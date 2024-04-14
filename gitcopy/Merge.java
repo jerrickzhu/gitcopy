@@ -30,11 +30,11 @@ public class Merge {
       String givenFileBlobSHA1 = givenBranchSnapShot.get(LCAFileName);
       String currFileBlobSHA1 = currBranchSnapShot.get(LCAFileName);
 
-      // Checks the first condition in comments
+      // Checks the first condition in comments -- same modifications in branches
       if (fileInCurrBranch && fileInGivenBranch) {
         if (currFileBlobSHA1.equals(givenFileBlobSHA1) && !currFileBlobSHA1.equals(LCAFileBlobSHA1)
             && !givenFileBlobSHA1.equals(LCAFileBlobSHA1)) {
-          mergeSnapShot.put(entry.getKey(), currFileBlobSHA1);
+          mergeSnapShot.put(LCAFileName, currFileBlobSHA1);
           // update state machine and fileblobs map. Don't need to update anything because
           // the file should already be in the current branch's state machine, so just
           // need to transition state
@@ -43,6 +43,19 @@ public class Merge {
         }
       }
 
+      // Checks condition 1a -- deleted same file in both branches
+      if (!fileInCurrBranch && !fileInGivenBranch) {
+        mergeSnapShot.remove(LCAFileName);
+      }
+
+      // Checks condition 2 -- if both files in branches differ in modifications
+      if (fileInCurrBranch && fileInGivenBranch) {
+        if (!givenFileBlobSHA1.equals(LCAFileBlobSHA1) && !givenFileBlobSHA1.equals(currFileBlobSHA1)
+            && !currFileBlobSHA1.equals(LCAFileBlobSHA1)) {
+          System.out.println("Conflict between branches in " + LCAFileName + ". Please resolve them.");
+          mergeSnapShot.remove(LCAFileName);
+        }
+      }
     }
   }
 
