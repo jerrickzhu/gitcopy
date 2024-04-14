@@ -268,11 +268,9 @@ public class Repo implements Serializable {
       String blobSHA1 = snapshotEntry.getValue();
       if ((new File(BLOB_DIRECTORY, blobSHA1)).exists()) {
         loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
-      } else {
-        loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, DELETED_BLOB_DIRECTORY);
+        FileUtils.writeContentsToFile(new File(fileName), loadedBlob.getFileContent());
       }
-      File file = new File(fileName);
-      FileUtils.writeContentsToFile(file, loadedBlob.getFileContent());
+
     }
   }
 
