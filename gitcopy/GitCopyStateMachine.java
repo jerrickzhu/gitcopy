@@ -23,27 +23,27 @@ public class GitCopyStateMachine extends StateMachine implements Serializable {
    * @throws IOException
    */
   public void transitionState(String input, String filename) throws IOException {
-    GitCopyStates currState = getCurrentStateOfFile(filename);
+    GitCopyStates currState = this.getCurrentStateOfFile(filename);
 
     if (input == "add") {
-      if (currState == GitCopyStates.UNSTAGED || currState == GitCopyStates.COMMITTED) {
-        updateFileAndStateToMachine(filename, GitCopyStates.STAGED, false);
+      if (currState == GitCopyStates.UNSTAGED) {
+        this.updateFileAndStateToMachine(filename, GitCopyStates.STAGED, false);
       } else {
         throw new IllegalArgumentException(
             "The file has to be in an unstaged state to move into staged.");
       }
     } else if (input == "commit") {
       if (currState == GitCopyStates.STAGED) {
-        updateFileAndStateToMachine(filename, GitCopyStates.COMMITTED, false);
+        this.updateFileAndStateToMachine(filename, GitCopyStates.UNSTAGED, false);
       } else {
         throw new IllegalArgumentException(
             "File must be in a staged state to be committed. Exceptions only for init.");
       }
     } else if (input == "rm") {
-      if (currState == GitCopyStates.STAGED) {
-        updateFileAndStateToMachine(filename, GitCopyStates.UNSTAGED, true);
+      if (currState == GitCopyStates.STAGED || currState == GitCopyStates.UNSTAGED) {
+        this.updateFileAndStateToMachine(filename, GitCopyStates.UNSTAGED, true);
       } else {
-        throw new IOException("Problem in removing file. File is not in an unstaged state to be rmoved.");
+        throw new IOException("Problem in removing file. File is not in an unstaged state to be removed.");
       }
     } else {
       throw new IllegalArgumentException(
