@@ -18,7 +18,7 @@ public class Repo implements Serializable {
   static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
   // First key are branches, values are hashmaps of the file name (key) and blobs
   // (values)
-  private Map<String, Map<String, Blob>> branchesFileBlobMap;
+  private Map<String, Map<String, Blob>> BRANCHES_FILE_BLOP_MAP;
   public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
@@ -29,7 +29,7 @@ public class Repo implements Serializable {
     BRANCH_STATE_MACHINES = new HashMap<>();
     CURRENT_BRANCH = "master";
     addMasterBranchToStateMachine();
-    branchesFileBlobMap = new HashMap<>();
+    BRANCHES_FILE_BLOP_MAP = new HashMap<>();
     addMasterBranchToFileBlobMap();
   }
 
@@ -62,7 +62,7 @@ public class Repo implements Serializable {
     // Prevent duplicates of files where blob SHA1s are the same. That would
     // indicate the same file with no content changes
     for (String file : files) {
-      Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
+      Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
       if (currBranchFileBlobMap != null && currBranchFileBlobMap.containsKey(file)) {
         // check if file with same content already exists in staging area. SHA1 should
         // be equal if so
@@ -90,7 +90,7 @@ public class Repo implements Serializable {
 
   public void remove(String[] files) throws IOException {
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
-    Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
+    Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
     for (String file : files) {
       if (currBranchStateMachine.fileInStateMachine(file)) {
         Blob blob = currBranchFileBlobMap.get(file);
@@ -122,7 +122,7 @@ public class Repo implements Serializable {
     Map<String, String> snapMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
     Map<String, GitCopyStates> files = currBranchStateMachine.getFiles();
-    Map<String, Blob> currBranchFileBlobMap = branchesFileBlobMap.get(CURRENT_BRANCH);
+    Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
 
     for (Map.Entry<String, GitCopyStates> entry : files.entrySet()) {
       String file = entry.getKey();
@@ -161,13 +161,14 @@ public class Repo implements Serializable {
 
   /** Checks out to another branch. */
   public void checkoutBranch(String branchName) throws IOException {
+    System.out.println("prev branch: " + CURRENT_BRANCH);
     CURRENT_BRANCH = branchName;
     Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
     Head.setGlobalHead(branchName, branchHeadCommit);
+    System.out.println("You're now on the " + branchName + " branch.");
 
     // Restore files in current working directory
-    Map<String, String> branchCommitSnapShot = branchHeadCommit.getSnapshot();
-    restoreCommit(branchCommitSnapShot);
+    restoreCommit(branchHeadCommit.getSnapshot());
 
   }
 
@@ -209,11 +210,11 @@ public class Repo implements Serializable {
 
       // The given branch is modified, but the curr branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap,
-          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), branchesFileBlobMap.get(CURRENT_BRANCH));
+          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH));
 
       // The curr branch is modified, but the given branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, currBranchSnapShot, snapshot, mergeSnapShotMap,
-          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), branchesFileBlobMap.get(CURRENT_BRANCH));
+          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH));
 
       // Both branches modified. Check if the changes are the same or if they are
       // different.
@@ -320,7 +321,9 @@ public class Repo implements Serializable {
    * @param branchName - the new branch name we created, which serves as the key
    */
   private void addBranchToStateMachine(String branchName) {
-    BRANCH_STATE_MACHINES.put(branchName, BRANCH_STATE_MACHINES.get(CURRENT_BRANCH));
+    GitCopyStateMachine originalStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
+    GitCopyStateMachine deepCopy = (GitCopyStateMachine) originalStateMachine.clone();
+    BRANCH_STATE_MACHINES.put(branchName, deepCopy);
   }
 
   /**
@@ -333,7 +336,7 @@ public class Repo implements Serializable {
 
   /** Adds the master branch into the branchesFileBlobMap. */
   private void addMasterBranchToFileBlobMap() {
-    branchesFileBlobMap.put("master", new HashMap<>());
+    BRANCHES_FILE_BLOP_MAP.put("master", new HashMap<>());
   }
 
   /**
@@ -342,7 +345,15 @@ public class Repo implements Serializable {
    * from the current branch into the new branchName key.
    */
   private void addBranchToFileBlobMap(String branchName) {
-    branchesFileBlobMap.put(branchName, branchesFileBlobMap.get(CURRENT_BRANCH));
+    Map<String, Blob> originalFileBlopMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
+    Map<String, Blob> deepCopy = new HashMap<>();
+    for (Map.Entry<String, Blob> entry : originalFileBlopMap.entrySet()) {
+      String fileName = entry.getKey();
+      Blob originalBlob = entry.getValue();
+      Blob deepCopyBlob = originalBlob.clone();
+      deepCopy.put(fileName, deepCopyBlob);
+    }
+    BRANCHES_FILE_BLOP_MAP.put(branchName, deepCopy);
   }
 
   /** Creates hidden folders in the .gitcopy directory */
