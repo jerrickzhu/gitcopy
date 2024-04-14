@@ -4,11 +4,23 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class StateMachine implements Serializable {
+public abstract class StateMachine implements Serializable, Cloneable {
   protected Map<String, GitCopyStates> currentStates;
 
   public StateMachine() {
     this.currentStates = new HashMap<>();
+  }
+
+  /** Cloning method */
+  @Override
+  public StateMachine clone() {
+    try {
+      StateMachine clone = (StateMachine) super.clone();
+      clone.currentStates = new HashMap<>(this.currentStates);
+      return clone;
+    } catch (CloneNotSupportedException excp) {
+      throw new AssertionError();
+    }
   }
 
   /**
