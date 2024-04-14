@@ -1,6 +1,5 @@
 package gitcopy;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +14,7 @@ public class Merge {
    * Function that checks conditions of if the given branch and curr branch have
    * been modded.
    * 1. Checks if modifications are the same. If so, take either commit.
+   * 1a. Checks if modifications if given and curr are BOTH delete.
    * 2. Checks if the modifications are different. If so, conflict.
    * 
    * @throws IOException
@@ -35,7 +35,9 @@ public class Merge {
         if (currFileBlobSHA1.equals(givenFileBlobSHA1) && !currFileBlobSHA1.equals(LCAFileBlobSHA1)
             && !givenFileBlobSHA1.equals(LCAFileBlobSHA1)) {
           mergeSnapShot.put(entry.getKey(), currFileBlobSHA1);
-          // update state machine and fileblobs map
+          // update state machine and fileblobs map. Don't need to update anything because
+          // the file should already be in the current branch's state machine, so just
+          // need to transition state
           stateMachine.transitionState("add", LCAFileName);
           fileBlobs.put(LCAFileName, FileUtils.loadObject(Blob.class, givenFileBlobSHA1, Repo.BLOB_DIRECTORY));
         }
