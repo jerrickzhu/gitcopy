@@ -230,9 +230,17 @@ public class Repo implements Serializable {
       Merge.isModdedGivenAndCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
           currBranchFileBlobMap);
 
+      // If curr branch has files that LCA doesn't
+      Merge.fileNotInLCAButInBranch(LCASnapShot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
+          currBranchFileBlobMap);
+
+      // If given branch has files that LCA doesn't
+      Merge.fileNotInLCAButInBranch(LCASnapShot, snapshot, mergeSnapShotMap, currBranchStateMachine,
+          currBranchFileBlobMap);
     }
 
-    // to do: at end of for loop above, save commit
+    // to do: at end of for loop above, save commit + remove branch from state
+    // machine and blob map
 
   }
 
