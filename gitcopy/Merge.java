@@ -10,6 +10,25 @@ import java.util.Set;
 
 public class Merge {
 
+  public static void fileNotInLCAButInBranch(Map<String, String> LCASnapShot, Map<String, String> branchSnapShot,
+      Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
+      throws IOException {
+    for (Map.Entry<String, String> entry : branchSnapShot.entrySet()) {
+      String branchFile = entry.getKey();
+      String branchBlobSHA1 = entry.getValue();
+      if (!LCASnapShot.containsKey(branchFile)) {
+        mergeSnapShot.put(branchFile, branchBlobSHA1);
+        if (!stateMachine.fileInStateMachine(branchFile)) {
+          stateMachine.updateFileAndStateToMachine(branchFile, GitCopyStates.UNSTAGED, false);
+          stateMachine.transitionState("add", branchFile);
+        }
+        if (!fileBlobs.containsKey(branchBlobSHA1)) {
+          fileBlobs.put(branchFile, FileUtils.loadObject(Blob.class, branchBlobSHA1, Repo.BLOB_DIRECTORY));
+        }
+      }
+    }
+  }
+
   /**
    * Function that checks conditions of if the given branch and curr branch have
    * been modded.
