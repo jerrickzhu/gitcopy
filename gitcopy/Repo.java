@@ -203,21 +203,32 @@ public class Repo implements Serializable {
     // The merge snapshot to commit with. Goes through each condition to add to this
     // snapshot.
     Map<String, String> mergeSnapShotMap = new HashMap<>();
+    GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
+    Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
+
+    // If the LCA commit SHA1 is the same as the global head pointer, then we don't
+    // need to continue on with the merge
+    if (LCA.getSHA1().equals(Head.getGlobalHeadCommitSHA1())) {
+      return;
+    }
     for (String branch : branches) {
       Commit branchCommit = Head.getBranchHeadCommit(branch);
       Map<String, String> snapshot = branchCommit.getSnapshot();
+
       // to do: add in all possible conditions here
 
       // The given branch is modified, but the curr branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap,
-          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH));
+          currBranchStateMachine, currBranchFileBlobMap);
 
       // The curr branch is modified, but the given branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, currBranchSnapShot, snapshot, mergeSnapShotMap,
-          BRANCH_STATE_MACHINES.get(CURRENT_BRANCH), BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH));
+          currBranchStateMachine, currBranchFileBlobMap);
 
       // Both branches modified. Check if the changes are the same or if they are
       // different.
+      Merge.isModdedGivenAndCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
+          currBranchFileBlobMap);
 
     }
 
