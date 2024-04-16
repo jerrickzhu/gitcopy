@@ -195,7 +195,7 @@ public class Repo implements Serializable {
     Map<String, String> commitSnapShot = foundCommit.getSnapshot();
     restoreCommit(commitSnapShot);
 
-    // Detach the head
+    // Detach the head and set the current branch to a temporary "DETACHED".
     Head.setGlobalHead(foundCommit);
     CURRENT_BRANCH = "DETACHED";
     System.out.println(
