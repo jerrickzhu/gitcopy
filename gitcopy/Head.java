@@ -9,14 +9,23 @@ public class Head {
       + ".gitcopy";
   private static String BRANCHES_FOLDER = GITCOPY_FOLDER + File.separator + ".branches";
 
+  /** USED FOR BRANCHES REFERENCE POINTERS ONLY */
   public static void setGlobalHead(String branchName, Commit commit) throws IOException {
     Branch branch = new Branch(branchName, commit);
     FileUtils.saveObjectToFileDisk("HEAD", GITCOPY_FOLDER, branch);
   }
 
+  /** USED FOR BRANCHES REFERENCE POINTERS ONLY */
   public static void setBranchHead(String branchName, Commit commit) throws IOException {
     Branch branch = new Branch(branchName, commit);
     FileUtils.saveObjectToFileDisk(branchName, BRANCHES_FOLDER, branch);
+  }
+
+  /**
+   * USED ONLY FOR CHECKOUT COMMIT
+   */
+  public static void setGlobalHead(Commit commit) throws IOException {
+    FileUtils.saveObjectToFileDisk("HEAD", GITCOPY_FOLDER, commit);
   }
 
   public static String getGlobalHeadCommitSHA1() {
