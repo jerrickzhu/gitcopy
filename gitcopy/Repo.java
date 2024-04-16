@@ -161,6 +161,8 @@ public class Repo implements Serializable {
   /** Checks out to another branch. */
   public void checkoutBranch(String branchName) throws IOException {
     System.out.println("prev branch: " + CURRENT_BRANCH);
+    // If we were previously in a detached head, we remove the detached branch state
+    // machine and branch file blob mapping.
     if (CURRENT_BRANCH.equals("DETACHED")) {
       if (BRANCH_STATE_MACHINES.containsKey("DETACHED")) {
         BRANCH_STATE_MACHINES.remove("DETACHED");
@@ -195,9 +197,12 @@ public class Repo implements Serializable {
     Map<String, String> commitSnapShot = foundCommit.getSnapshot();
     restoreCommit(commitSnapShot);
 
-    // Detach the head and set the current branch to a temporary "DETACHED".
+    // Detach the head and set the current branch to a temporary "DETACHED". Add in
+    // detached (temporary) branch state machine and file blob map.
     Head.setGlobalHead(foundCommit);
     CURRENT_BRANCH = "DETACHED";
+    addBranchToStateMachine("DETACHED");
+    addBranchToFileBlobMap("DETACHED");
     System.out.println(
         "You're now in a detached head state. Please be careful when making changes. You can make experimental stages and commits here, but they will not be saved thereafter once you switch your branch.");
   }
