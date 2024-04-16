@@ -422,8 +422,7 @@ public class Repo implements Serializable {
         new File(gitCopyDirectory, ".log"),
         new File(gitCopyDirectory, ".commits"),
         new File(gitCopyDirectory, ".blobs"),
-        new File(gitCopyDirectory, ".branches"),
-        new File(gitCopyDirectory, ".deleted_blobs")
+        new File(gitCopyDirectory, ".branches")
     };
 
     for (File folder : folders) {
