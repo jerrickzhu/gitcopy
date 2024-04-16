@@ -117,11 +117,6 @@ public class Repo implements Serializable {
   }
 
   public void commit(String message) throws IOException {
-
-    // need logic here that inputs a "temp branch" for commits in detached head
-    // states
-    if (verifyRepoStateInitialized()) {
-    }
     Map<String, String> snapMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
     Map<String, GitCopyStates> files = currBranchStateMachine.getFiles();
@@ -203,7 +198,8 @@ public class Repo implements Serializable {
     // Detach the head
     Head.setGlobalHead(foundCommit);
     CURRENT_BRANCH = "DETACHED";
-    System.out.println("You're now in a detached head state. Please be careful when making changes.");
+    System.out.println(
+        "You're now in a detached head state. Please be careful when making changes. You can make experimental stages and commits here, but they will not be saved thereafter once you switch your branch.");
   }
 
   public void merge(String[] branches) throws IOException {
