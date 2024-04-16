@@ -22,7 +22,7 @@ public class Repo implements Serializable {
   public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
-  public static final String DELETED_BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".deleted_blobs";
+  public static final String BRANCH_DIRECOTRY = GITCOPY_DIRECTORY + File.separator + ".branches";
 
   public Repo() {
     REPO_STATE_MACHINE = new RepoStateMachine();
@@ -102,8 +102,6 @@ public class Repo implements Serializable {
         deleteFiles(blobDirectoryFile, blobStagedFile, fileCWD);
         // Transitions state then removes from state machine
         currBranchStateMachine.transitionState("rm", file);
-        // Adds deleted blobs in deleted blob directory
-        FileUtils.saveObjectToFileDisk(blobSHA1, DELETED_BLOB_DIRECTORY, blob);
 
       } else {
         System.out.println("This file does not exist.");
@@ -205,6 +203,10 @@ public class Repo implements Serializable {
     Map<String, String> mergeSnapShotMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
     Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
+    // boolean value to use to check if we need to look for files not in LCA but in
+    // curr branch (fileNotInLCAButInBranch). Used to reduce redundant code calls in
+    // case of many branches to iterate through.
+    boolean seenCurrBranch = false;
 
     // If the LCA commit SHA1 is the same as the global head pointer, then we don't
     // need to continue on with the merge
@@ -230,18 +232,52 @@ public class Repo implements Serializable {
       Merge.isModdedGivenAndCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
           currBranchFileBlobMap);
 
-      // If curr branch has files that LCA doesn't
-      Merge.fileNotInLCAButInBranch(LCASnapShot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
-          currBranchFileBlobMap);
+      // Check to see if we've already checked fileNotInLCAButInBranch for the curr
+      // branch. Reduce redundant calls during iterations.
+      if (!seenCurrBranch) {
+        // If curr branch has files that LCA doesn't
+        Merge.fileNotInLCAButInBranch(LCASnapShot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
+            currBranchFileBlobMap);
+        seenCurrBranch = true;
+      }
 
       // If given branch has files that LCA doesn't
       Merge.fileNotInLCAButInBranch(LCASnapShot, snapshot, mergeSnapShotMap, currBranchStateMachine,
           currBranchFileBlobMap);
     }
 
-    // to do: at end of for loop above, save commit + remove branch from state
-    // machine and blob map
+    // Save commit + remove branch from state machine and blob map
+    commitMerge(mergeSnapShotMap);
+    for (String branch : branches) {
+      BRANCH_STATE_MACHINES.remove(branch);
+      BRANCHES_FILE_BLOP_MAP.remove(branch);
+    }
 
+  }
+
+  private void commitMerge(Map<String, String> mergeMap) throws IOException {
+    String lastCommitSHA1 = Head.getBranchHeadCommit(CURRENT_BRANCH).getSHA1();
+    boolean allFileStatesStaged = false;
+    for (Map.Entry<String, String> entry : mergeMap.entrySet()) {
+      String fileName = entry.getKey();
+      GitCopyStates currState = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH).getCurrentStateOfFile(fileName);
+      if (currState == GitCopyStates.STAGED) {
+        allFileStatesStaged = true;
+      } else {
+        allFileStatesStaged = false;
+        System.out.println("Not all of the files in merge map are staged.");
+        return;
+      }
+    }
+    if (allFileStatesStaged) {
+      Commit newCommit = new Commit("merge commit", mergeMap, lastCommitSHA1);
+      newCommit.saveCommit();
+
+      Branch currentBranch = FileUtils.loadObject(Branch.class, CURRENT_BRANCH, BRANCH_DIRECOTRY);
+      String currBranchName = currentBranch.getName();
+      Head.setGlobalHead(currBranchName, newCommit);
+      Head.setBranchHead(currBranchName, newCommit);
+    }
   }
 
   // Log commits for current branch. Used when no second argument is passed for
