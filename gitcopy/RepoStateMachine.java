@@ -28,11 +28,6 @@ public class RepoStateMachine extends StateMachine {
           updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED, false);
           break;
         }
-      case "checkout commit":
-        if (currState == GitCopyStates.INITIALIZED) {
-          updateFileAndStateToMachine("REPO", GitCopyStates.DETACHED, false);
-          break;
-        }
     }
   }
 

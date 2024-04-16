@@ -11,18 +11,18 @@ public class Repo implements Serializable {
 
   private RepoStateMachine REPO_STATE_MACHINE;
   private Map<String, GitCopyStateMachine> BRANCH_STATE_MACHINES;
-  private String CURRENT_BRANCH;
-  private static final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
-  private static final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
-  static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
-  static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
   // First key are branches, values are hashmaps of the file name (key) and blobs
   // (values)
   private Map<String, Map<String, Blob>> BRANCHES_FILE_BLOP_MAP;
+  private String CURRENT_BRANCH;
+  private static final String MAIN_DIRECTORY = FileUtils.findGitCopyRootDirectory().getAbsolutePath();
+  private static final String GITCOPY_DIRECTORY = MAIN_DIRECTORY + File.separator + ".gitcopy";
   public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
   public static final String BRANCH_DIRECOTRY = GITCOPY_DIRECTORY + File.separator + ".branches";
+  static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
+  static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
 
   public Repo() {
     REPO_STATE_MACHINE = new RepoStateMachine();
@@ -55,7 +55,7 @@ public class Repo implements Serializable {
   }
 
   public void add(String[] files) throws IOException {
-    if (!verifyRepoState()) {
+    if (!verifyRepoStateInitialized()) {
       return;
     }
 
@@ -117,6 +117,11 @@ public class Repo implements Serializable {
   }
 
   public void commit(String message) throws IOException {
+
+    // need logic here that inputs a "temp branch" for commits in detached head
+    // states
+    if (verifyRepoStateInitialized()) {
+    }
     Map<String, String> snapMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
     Map<String, GitCopyStates> files = currBranchStateMachine.getFiles();
@@ -141,6 +146,7 @@ public class Repo implements Serializable {
     String currBranchName = currentBranch.getName();
     Head.setGlobalHead(currBranchName, newCommit);
     Head.setBranchHead(currBranchName, newCommit);
+
   }
 
   public void branch(String branchName) throws IOException {
@@ -174,6 +180,7 @@ public class Repo implements Serializable {
   public void checkoutCommit(String commitHash) throws IOException {
     // Get the latest head commit pointer, then recursively find the commit hash
     // and its corresponding commit instance.
+
     Commit lastCommit = Head.getGlobalHeadCommit();
     Commit foundCommit = findCommit(commitHash, lastCommit);
     if (foundCommit == null) {
@@ -185,8 +192,10 @@ public class Repo implements Serializable {
     Map<String, String> commitSnapShot = foundCommit.getSnapshot();
     restoreCommit(commitSnapShot);
 
-    // to do: figure out repointing the global head to be at the commit we are now
-    // at and how we deal with detached states.
+    // Detach the head
+    Head.setGlobalHead(foundCommit);
+    CURRENT_BRANCH = "DETACHED";
+    System.out.println("You're now in a detached head state. Please be careful when making changes.");
   }
 
   public void merge(String[] branches) throws IOException {
@@ -434,7 +443,7 @@ public class Repo implements Serializable {
     }
   }
 
-  private boolean verifyRepoState() {
+  private boolean verifyRepoStateInitialized() {
     return REPO_STATE_MACHINE.getCurrentStateOfFile("REPO").equals(GitCopyStates.INITIALIZED);
   }
 

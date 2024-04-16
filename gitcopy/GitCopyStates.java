@@ -8,6 +8,4 @@ public enum GitCopyStates implements Serializable {
   UNSTAGED,
   STAGED,
   COMMITTED,
-  DETACHED,
-  ATTACHED
 }
