@@ -166,6 +166,14 @@ public class Repo implements Serializable {
   /** Checks out to another branch. */
   public void checkoutBranch(String branchName) throws IOException {
     System.out.println("prev branch: " + CURRENT_BRANCH);
+    if (CURRENT_BRANCH.equals("DETACHED")) {
+      if (BRANCH_STATE_MACHINES.containsKey("DETACHED")) {
+        BRANCH_STATE_MACHINES.remove("DETACHED");
+      }
+      if (BRANCHES_FILE_BLOP_MAP.containsKey("DETACHED")) {
+        BRANCHES_FILE_BLOP_MAP.remove("DETACHED");
+      }
+    }
     CURRENT_BRANCH = branchName;
     Commit branchHeadCommit = Head.getBranchHeadCommit(branchName);
     Head.setGlobalHead(branchName, branchHeadCommit);
