@@ -22,14 +22,17 @@ public class RepoStateMachine extends StateMachine {
    */
   public void transitionState(String input, String filename) throws IOException {
     GitCopyStates currState = getCurrentStateOfFile(filename);
-
-    if (input == "init") {
-      if (currState == GitCopyStates.UNINITIALIZED) {
-        updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED, false);
-      } else {
-        throw new IllegalArgumentException(
-            "The repository must be in an uninitialized state if you use the init command.");
-      }
+    switch (input) {
+      case "init":
+        if (currState == GitCopyStates.UNINITIALIZED) {
+          updateFileAndStateToMachine("REPO", GitCopyStates.INITIALIZED, false);
+          break;
+        }
+      case "checkout commit":
+        if (currState == GitCopyStates.INITIALIZED) {
+          updateFileAndStateToMachine("REPO", GitCopyStates.DETACHED, false);
+          break;
+        }
     }
   }
 
