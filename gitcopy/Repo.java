@@ -109,13 +109,6 @@ public class Repo implements Serializable {
     }
   }
 
-  /** Helper function for remove method. Deletes files */
-  private void deleteFiles(File... files) {
-    for (File file : files) {
-      FileUtils.deleteFile(file);
-    }
-  }
-
   public void commit(String message) throws IOException {
     Map<String, String> snapMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
@@ -241,11 +234,6 @@ public class Repo implements Serializable {
     // case of many branches to iterate through.
     boolean seenCurrBranch = false;
 
-    // If the LCA commit SHA1 is the same as the global head pointer, then we don't
-    // need to continue on with the merge
-    if (LCA.getSHA1().equals(Head.getGlobalHeadCommitSHA1())) {
-      return;
-    }
     for (String branch : branches) {
       Commit branchCommit = Head.getBranchHeadCommit(branch);
       Map<String, String> snapshot = branchCommit.getSnapshot();
@@ -279,11 +267,14 @@ public class Repo implements Serializable {
           currBranchFileBlobMap);
     }
 
-    // Save commit + remove branch from state machine and blob map
+    // Save commit
     commitMerge(mergeSnapShotMap);
+    // Remove branch from state machine and blob map, and then remove the branch
+    // file from branches folder
     for (String branch : branches) {
       BRANCH_STATE_MACHINES.remove(branch);
       BRANCHES_FILE_BLOP_MAP.remove(branch);
+      deleteFiles(new File(BRANCH_DIRECTORY + File.separator + branch));
     }
 
   }
@@ -471,17 +462,26 @@ public class Repo implements Serializable {
     return REPO_STATE_MACHINE.getCurrentStateOfFile("REPO").equals(GitCopyStates.INITIALIZED);
   }
 
+  /** Helper function to make initial commits */
   private Commit makeInitialCommit() throws IOException {
     Commit initialCommit = new Commit("Initialization commit", COMMIT_INIT_SHA1);
     initialCommit.saveCommit();
     return initialCommit;
   }
 
+  /** Helper function to stage files */
   private void stageFile(String filename, Blob blob) throws IOException {
 
     // Save the blob to disk in .blobs and .staged
     FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), BLOB_DIRECTORY, blob);
     FileUtils.saveObjectToFileDisk(blob.getBlobSHA1(), STAGED_DIRECTORY, blob);
+  }
+
+  /** Helper function to delete files */
+  private void deleteFiles(File... files) {
+    for (File file : files) {
+      FileUtils.deleteFile(file);
+    }
   }
 
 }
