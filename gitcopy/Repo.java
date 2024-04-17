@@ -166,6 +166,16 @@ public class Repo implements Serializable {
     }
   }
 
+  public void branchDelete(String[] branches) throws IOException {
+    // Remove branch from state machine and blob map, and then remove the branch
+    // file from branches folder
+    for (String branch : branches) {
+      BRANCH_STATE_MACHINES.remove(branch);
+      BRANCHES_FILE_BLOP_MAP.remove(branch);
+      deleteFiles(new File(BRANCH_DIRECTORY + File.separator + branch));
+    }
+  }
+
   /** Checks out to another branch. */
   public void checkoutBranch(String branchName) throws IOException {
     System.out.println("prev branch: " + CURRENT_BRANCH);
@@ -269,14 +279,6 @@ public class Repo implements Serializable {
 
     // Save commit
     commitMerge(mergeSnapShotMap);
-    // Remove branch from state machine and blob map, and then remove the branch
-    // file from branches folder
-    for (String branch : branches) {
-      BRANCH_STATE_MACHINES.remove(branch);
-      BRANCHES_FILE_BLOP_MAP.remove(branch);
-      deleteFiles(new File(BRANCH_DIRECTORY + File.separator + branch));
-    }
-
   }
 
   private void commitMerge(Map<String, String> mergeMap) throws IOException {

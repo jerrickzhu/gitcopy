@@ -104,8 +104,14 @@ public class Main {
   }
 
   private static void handleBranch(String[] args) throws IOException {
+    // If the only command is branch, then call Repo's branch method that lists all
+    // branches
     if (args.length == 1) {
       newRepo.branch();
+      // If the second argument in branch is -d, delete the branch
+    } else if (args[1].equals("-d")) {
+      String[] branches = Arrays.copyOfRange(args, 2, args.length);
+      newRepo.branchDelete(branches);
     } else {
       newRepo.branch(args[1]);
     }
