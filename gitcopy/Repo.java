@@ -20,7 +20,7 @@ public class Repo implements Serializable {
   public static final String BLOB_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".blobs";
   public static final String STAGED_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".staging";
   public static final String COMMIT_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".commits";
-  public static final String BRANCH_DIRECOTRY = GITCOPY_DIRECTORY + File.separator + ".branches";
+  public static final String BRANCH_DIRECTORY = GITCOPY_DIRECTORY + File.separator + ".branches";
   static final String DEFAULT_SHA1 = "0000000000000000000000000000000000000000";
   static final String COMMIT_INIT_SHA1 = "1000000000000000000000000000000000000001";
 
@@ -144,6 +144,7 @@ public class Repo implements Serializable {
 
   }
 
+  /** Creates a new branch */
   public void branch(String branchName) throws IOException {
     // Grab last global head commit and make it so the branch created
     // has that commit as its first commit pointer
@@ -156,6 +157,20 @@ public class Repo implements Serializable {
     Head.setBranchHead(branchName, lastCommit);
     addBranchToStateMachine(branchName);
     addBranchToFileBlobMap(branchName);
+  }
+
+  /** Checks what branches are currently live */
+  public void branch() throws IOException {
+    File branchPath = new File(BRANCH_DIRECTORY);
+    File[] branches = branchPath.listFiles();
+    for (File branch : branches) {
+      String fileName = branch.getName();
+      if (CURRENT_BRANCH.equals(fileName)) {
+        System.out.println(fileName + " *");
+      } else {
+        System.out.println(fileName);
+      }
+    }
   }
 
   /** Checks out to another branch. */
@@ -291,7 +306,7 @@ public class Repo implements Serializable {
       Commit newCommit = new Commit("merge commit", mergeMap, lastCommitSHA1);
       newCommit.saveCommit();
 
-      Branch currentBranch = FileUtils.loadObject(Branch.class, CURRENT_BRANCH, BRANCH_DIRECOTRY);
+      Branch currentBranch = FileUtils.loadObject(Branch.class, CURRENT_BRANCH, BRANCH_DIRECTORY);
       String currBranchName = currentBranch.getName();
       Head.setGlobalHead(currBranchName, newCommit);
       Head.setBranchHead(currBranchName, newCommit);
