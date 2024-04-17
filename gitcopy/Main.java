@@ -104,7 +104,11 @@ public class Main {
   }
 
   private static void handleBranch(String[] args) throws IOException {
-    newRepo.branch(args[1]);
+    if (args.length == 1) {
+      newRepo.branch();
+    } else {
+      newRepo.branch(args[1]);
+    }
   }
 
   private static void handleCheckoutBranch(String[] args) throws IOException {
