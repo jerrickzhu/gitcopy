@@ -166,6 +166,10 @@ public class Repo implements Serializable {
     }
   }
 
+  /**
+   * Deletes branches. Used when command of 'java gitcopy.Main branch -d [insert
+   * branches]' is invoked
+   */
   public void branchDelete(String[] branches) throws IOException {
     // Remove branch from state machine and blob map, and then remove the branch
     // file from branches folder
@@ -260,7 +264,7 @@ public class Repo implements Serializable {
 
       // Both branches modified. Check if the changes are the same or if they are
       // different.
-      Merge.isModdedGivenAndCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
+      Merge.isModdedGivenAndOrCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
           currBranchFileBlobMap);
 
       // Check to see if we've already checked fileNotInLCAButInBranch for the curr

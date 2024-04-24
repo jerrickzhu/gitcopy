@@ -10,6 +10,12 @@ import java.util.Set;
 
 public class Merge {
 
+  public static void fileNotInOneBranchButInLCA(Map<String, String> LCASnapShot, Map<String, String> branchSnapShot,
+      Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
+      throws IOException {
+    return;
+  }
+
   /**
    * Function that checks for files in a branch but NOT in the LCA commit. Adds
    * those files in the branch into the merge map.
@@ -41,7 +47,8 @@ public class Merge {
   }
 
   /**
-   * Function that checks conditions of if the given branch and curr branch have
+   * Function that checks conditions of if the given branch and/or curr branch
+   * have
    * been modded.
    * 1. Checks if modifications are the same. If so, take either commit.
    * 1a. Checks if modifications if given and curr are BOTH delete.
@@ -49,7 +56,7 @@ public class Merge {
    * 
    * @throws IOException
    */
-  public static void isModdedGivenAndCurr(Map<String, String> LCASnapShot, Map<String, String> givenBranchSnapShot,
+  public static void isModdedGivenAndOrCurr(Map<String, String> LCASnapShot, Map<String, String> givenBranchSnapShot,
       Map<String, String> currBranchSnapShot, Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine,
       Map<String, Blob> fileBlobs) throws IOException {
     for (Map.Entry<String, String> entry : LCASnapShot.entrySet()) {
