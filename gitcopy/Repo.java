@@ -243,6 +243,10 @@ public class Repo implements Serializable {
     Map<String, String> mergeSnapShotMap = new HashMap<>();
     GitCopyStateMachine currBranchStateMachine = BRANCH_STATE_MACHINES.get(CURRENT_BRANCH);
     Map<String, Blob> currBranchFileBlobMap = BRANCHES_FILE_BLOP_MAP.get(CURRENT_BRANCH);
+
+    // Tracks files that need to be deleted from merging
+    Map<String, String> filesToDelete = new HashMap<>();
+
     // boolean value to use to check if we need to look for files not in LCA but in
     // curr branch (fileNotInLCAButInBranch). Used to reduce redundant code calls in
     // case of many branches to iterate through.
@@ -251,8 +255,6 @@ public class Repo implements Serializable {
     for (String branch : branches) {
       Commit branchCommit = Head.getBranchHeadCommit(branch);
       Map<String, String> snapshot = branchCommit.getSnapshot();
-
-      // to do: add in all possible conditions here
 
       // The given branch is modified, but the curr branch is not.
       Merge.oneBranchChangesOnly(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap,
@@ -265,7 +267,7 @@ public class Repo implements Serializable {
       // Both branches modified. Check if the changes are the same or if they are
       // different.
       Merge.isModdedGivenAndOrCurr(LCASnapShot, snapshot, currBranchSnapShot, mergeSnapShotMap, currBranchStateMachine,
-          currBranchFileBlobMap);
+          currBranchFileBlobMap, filesToDelete);
 
       // Check to see if we've already checked fileNotInLCAButInBranch for the curr
       // branch. Reduce redundant calls during iterations.
@@ -283,6 +285,19 @@ public class Repo implements Serializable {
 
     // Save commit
     commitMerge(mergeSnapShotMap);
+
+    // Delete files after merging and finding files to be deleted
+    deleteFilesFromMerge(filesToDelete);
+  }
+
+  /** Helper function to delete files from merge. */
+  private void deleteFilesFromMerge(Map<String, String> filesToDelete) {
+    for (Map.Entry<String, String> entry : filesToDelete.entrySet()) {
+      String fileName = entry.getKey();
+      String blobSHA1 = entry.getValue();
+      File fileCWD = new File(System.getProperty("user.dir") + File.separator + fileName);
+      deleteFiles(fileCWD);
+    }
   }
 
   private void commitMerge(Map<String, String> mergeMap) throws IOException {
@@ -352,11 +367,14 @@ public class Repo implements Serializable {
       String fileName = snapshotEntry.getKey();
       String blobSHA1 = snapshotEntry.getValue();
       if ((new File(BLOB_DIRECTORY, blobSHA1)).exists()) {
-        loadedBlob = FileUtils.loadObject(Blob.class, blobSHA1, BLOB_DIRECTORY);
-        FileUtils.writeContentsToFile(new File(fileName), loadedBlob.getFileContent());
+        writeFile(loadedBlob, fileName);
       }
 
     }
+  }
+
+  private void writeFile(Blob blob, String fileName) throws IOException {
+    FileUtils.writeContentsToFile(new File(fileName), blob.getFileContent());
   }
 
   /** Helper function to encapsulate getting LCA */

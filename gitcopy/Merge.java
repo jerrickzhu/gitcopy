@@ -55,7 +55,7 @@ public class Merge {
    */
   public static void isModdedGivenAndOrCurr(Map<String, String> LCASnapShot, Map<String, String> givenBranchSnapShot,
       Map<String, String> currBranchSnapShot, Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine,
-      Map<String, Blob> fileBlobs) throws IOException {
+      Map<String, Blob> fileBlobs, Map<String, String> filesToDelete) throws IOException {
     for (Map.Entry<String, String> entry : LCASnapShot.entrySet()) {
       String LCAFileName = entry.getKey();
       boolean fileInGivenBranch = givenBranchSnapShot.containsKey(LCAFileName);
@@ -79,6 +79,7 @@ public class Merge {
 
       // Checks condition 1a -- deleted same file in both branches
       if (!fileInCurrBranch && !fileInGivenBranch) {
+        filesToDelete.put(LCAFileName, LCAFileBlobSHA1);
         mergeSnapShot.remove(LCAFileName);
       }
 
@@ -95,8 +96,9 @@ public class Merge {
       // LCA) but given branch doesn't
       if (fileInCurrBranch && !fileInGivenBranch) {
         if (currFileBlobSHA1.equals(LCAFileBlobSHA1)) {
-          stateMachine.removeFile(LCAFileName);
+          stateMachine.transitionState("remove", LCAFileName);
           fileBlobs.remove(LCAFileName);
+          filesToDelete.put(LCAFileName, givenFileBlobSHA1);
           // The file shouldn't be in mergeSnapShot, but as a safety precaution, remove
           // anyway
           mergeSnapShot.remove(LCAFileName);
@@ -107,8 +109,9 @@ public class Merge {
       // LCA) but curr branch does not
       if (!fileInCurrBranch && fileInGivenBranch) {
         if (givenFileBlobSHA1.equals(LCAFileBlobSHA1)) {
-          stateMachine.removeFile(LCAFileName);
+          stateMachine.transitionState("remove", LCAFileName);
           fileBlobs.remove(LCAFileName);
+          filesToDelete.put(LCAFileName, currFileBlobSHA1);
           mergeSnapShot.remove(LCAFileName);
         }
       }
