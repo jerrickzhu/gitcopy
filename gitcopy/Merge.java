@@ -10,12 +10,6 @@ import java.util.Set;
 
 public class Merge {
 
-  public static void fileNotInOneBranchButInLCA(Map<String, String> LCASnapShot, Map<String, String> branchSnapShot,
-      Map<String, String> mergeSnapShot, GitCopyStateMachine stateMachine, Map<String, Blob> fileBlobs)
-      throws IOException {
-    return;
-  }
-
   /**
    * Function that checks for files in a branch but NOT in the LCA commit. Adds
    * those files in the branch into the merge map.
