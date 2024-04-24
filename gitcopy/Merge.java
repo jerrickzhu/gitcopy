@@ -53,6 +53,9 @@ public class Merge {
    * 1. Checks if modifications are the same. If so, take either commit.
    * 1a. Checks if modifications if given and curr are BOTH delete.
    * 2. Checks if the modifications are different. If so, conflict.
+   * 3. Checks if one branch has a file that LCA also has AND that file is
+   * unchanged since LCA, but the other branch does not. If so, we remove the
+   * file.
    * 
    * @throws IOException
    */
@@ -90,6 +93,28 @@ public class Merge {
         if (!givenFileBlobSHA1.equals(LCAFileBlobSHA1) && !givenFileBlobSHA1.equals(currFileBlobSHA1)
             && !currFileBlobSHA1.equals(LCAFileBlobSHA1)) {
           System.out.println("Conflict between branches in " + LCAFileName + ". Please resolve them.");
+          mergeSnapShot.remove(LCAFileName);
+        }
+      }
+
+      // Checks condition 3 specifically for if the curr branch has the file (as does
+      // LCA) but given branch doesn't
+      if (fileInCurrBranch && !fileInGivenBranch) {
+        if (currFileBlobSHA1.equals(LCAFileBlobSHA1)) {
+          stateMachine.removeFile(LCAFileName);
+          fileBlobs.remove(LCAFileName);
+          // The file shouldn't be in mergeSnapShot, but as a safety precaution, remove
+          // anyway
+          mergeSnapShot.remove(LCAFileName);
+        }
+      }
+
+      // Checks condition 3 specifically for if the given branch has the file (as does
+      // LCA) but curr branch does not
+      if (!fileInCurrBranch && fileInGivenBranch) {
+        if (givenFileBlobSHA1.equals(LCAFileBlobSHA1)) {
+          stateMachine.removeFile(LCAFileName);
+          fileBlobs.remove(LCAFileName);
           mergeSnapShot.remove(LCAFileName);
         }
       }
